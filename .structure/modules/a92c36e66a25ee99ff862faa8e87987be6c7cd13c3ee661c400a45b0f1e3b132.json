@@ -7,6 +7,9 @@
     },
     {
       "statement": "Structured architecture, browser evidence and graph benchmark are in docs. Deployment status is tracked separately from development completion."
+    },
+    {
+      "statement": "Git text files use LF so source archives execute correctly on Linux even when built on Windows."
     }
   ],
   "dont_assume": [

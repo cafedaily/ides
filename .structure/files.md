@@ -1,5 +1,6 @@
 # Files (generated)
 
+- .gitattributes
 - .gitignore
 - AGENTS.md
 - CLAUDE.md

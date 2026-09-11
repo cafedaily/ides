@@ -211,6 +211,9 @@
           },
           {
             "statement": "Structured architecture, browser evidence and graph benchmark are in docs. Deployment status is tracked separately from development completion."
+          },
+          {
+            "statement": "Git text files use LF so source archives execute correctly on Linux even when built on Windows."
           }
         ],
         "dont_assume": [
@@ -381,6 +384,33 @@
       }
     },
     {
+      "id": "work:DEV-deployment-portability",
+      "type": "work_item",
+      "label": "Preserve portable line endings in Git source archives",
+      "data": {
+        "schema_version": 2,
+        "title": "Preserve portable line endings in Git source archives",
+        "kind": "bugfix",
+        "impact": "behavior",
+        "modules": [
+          "ops"
+        ],
+        "scope": [
+          ".gitattributes"
+        ],
+        "acceptance": [
+          "Git archive shell scripts contain LF line endings on Windows and Linux"
+        ],
+        "id": "DEV-deployment-portability",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-11T12:26:44.660028+00:00",
+        "updated_at": "2026-09-11T12:26:58.639052+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
+    },
+    {
       "id": "event:75d31cce997d48f395da0fe78f8432b8",
       "type": "event",
       "label": "initialized",
@@ -507,6 +537,12 @@
       "id": "57326cb0ec1a5a7ab1d4fefda79767b8327300e8dbe5a08804592b84192bc6dd",
       "source": "work:DEV-4e0ca6f5e5ca",
       "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "941e60da7cc9f268b64736bba32f02ab80f3c7a13fdaab81ca0141eca9a45cf4",
+      "source": "work:DEV-deployment-portability",
+      "target": "module:ops",
       "type": "affects"
     },
     {
