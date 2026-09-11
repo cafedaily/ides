@@ -3,14 +3,20 @@
   "module": "qa",
   "truths": [
     {
-      "statement": "tests/test_security.py uses synthetic credentials and ephemeral local HTTP servers to cover production token refusal, anonymous/public health, unauthorized private routes, login/session/logout, bearer and cookie flows, origin rejection, key redaction/preserve/clear behavior, plain export key stripping, malformed Content-Length rejection, contained static paths, non-loopback startup refusal, and legacy API health counts."
+      "statement": "tests/test_streaming.py uses ephemeral-port HTTP servers to prove the first downstream SSE delta arrives before a controlled upstream completion barrier is released."
     },
     {
-      "statement": "Current validation evidence for T-003: development_check project-tests passed with 110 tests passing; development_check web-syntax passed."
+      "statement": "Streaming regressions cover real server /api/chat SSE headers, upstream stream:true payloads, auth/origin rejection before upstream contact, invalid input, malformed upstream frames and sanitized upstream error frames."
+    },
+    {
+      "statement": "Security regressions cover production Secure-cookie override hardening, unsupported Transfer-Encoding rejection, invalid Content-Length rejection and connection-close behavior after framing errors."
+    },
+    {
+      "statement": "Required validation runners passed: project-tests reported 117 passed and 0 failed; web-syntax reported Web source syntax and top-level symbols passed."
     }
   ],
   "dont_assume": [
-    "Security tests use real production credentials; all tokens and origins in tests are synthetic.",
-    "Passing backend tests means frontend authentication UI is implemented; that is a later task."
+    "An incidental socket reset traceback during the connection-close regression is not a test failure when project-tests exits 0.",
+    "Do not count subagent isolated changes as applied unless explicitly accepted; the worker result was inspected and discarded in favor of parent-integrated changes."
   ]
 }

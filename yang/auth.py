@@ -272,7 +272,8 @@ def load_policy_from_env(
         raise AuthConfigError("%s is not a valid cookie name" % SESSION_COOKIE_NAME_ENV)
     ttl = _parse_positive_int(env.get(SESSION_TTL_ENV), DEFAULT_SESSION_TTL_SECONDS)
     secure_override = env.get(AUTH_SECURE_COOKIE_ENV)
-    secure_cookie = production if secure_override is None else _truthy(secure_override)
+    # Production deployments must not be able to turn off Secure cookies.
+    secure_cookie = True if production else (False if secure_override is None else _truthy(secure_override))
     policy = AuthPolicy(
         token=token,
         production=production,

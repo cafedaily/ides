@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "title": "# T-001: Real SSE streaming and cancellation\n\nUse the installed harness for this project. The user authorized the entire development plan, but this task does not deploy anything.\n\nPlan modules backend, frontend, qa; scope yang/chat.py, yang/server.py, yang/auth.py, web/src/03_api.js, web/src/04_agent.js, web/src/06_idea.js, tests/test_chat.py, tests/test_streaming.py, tests/test_security.py. Kind feature, impact behavior.\n\nAcceptance:\n1. POST /api/chat with stream=true forwards stream=true to the selected O",
+  "kind": "feature",
+  "impact": "behavior",
+  "modules": [
+    "backend",
+    "frontend",
+    "qa"
+  ],
+  "scope": [
+    "yang/chat.py",
+    "yang/server.py",
+    "yang/auth.py",
+    "web/src/03_api.js",
+    "web/src/04_agent.js",
+    "web/src/06_idea.js",
+    "tests/test_chat.py",
+    "tests/test_streaming.py",
+    "tests/test_security.py"
+  ],
+  "acceptance": [
+    "POST /api/chat with stream=true forwards stream=true to selected OpenAI-compatible upstream and relays real SSE deltas as they arrive using event data objects for delta/done/error, with correct SSE headers and flushing; non-stream response remains compatible.",
+    "Private route authentication and same-origin checks run before streaming; invalid input is clearly rejected; upstream keys and raw internal error details are not exposed in stream or non-stream errors.",
+    "Frontend stream parsing handles split UTF-8 chunks/frames, accumulates text, invokes existing onText callbacks incrementally, passes AbortSignal, preserves action-based model routing and JSON-mode outputs, and current ask/angle/collide UI visibly updates while generated text arrives.",
+    "Cancelling generation aborts fetch, does not save a partial generated question, closes downstream/upstream responses, and avoids fake streaming by splitting a buffered answer.",
+    "Ephemeral-port HTTP tests prove first delta is received before a controlled upstream completion barrier is released; cover upstream errors and malformed frames; preserve current routing tests and web syntax checks.",
+    "Authentication regressions fixed: production cannot disable Secure cookies using YANG_AUTH_SECURE_COOKIE=0; unsupported Transfer-Encoding is rejected; invalid Content-Length/body framing errors close connections; focused regressions added.",
+    "Run project-tests and web-syntax via development_check, synchronize backend/frontend/qa knowledge, and finish with exact acceptance evidence."
+  ],
+  "id": "DEV-4e0ca6f5e5ca",
+  "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+  "state": "done",
+  "created_at": "2026-09-11T11:48:55.344477+00:00",
+  "updated_at": "2026-09-11T11:53:25.058603+00:00",
+  "managed_by": "pi-development-harness",
+  "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+}

@@ -8,7 +8,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import api, auth, db
+from . import api, auth, chat, db
 
 MAX_BODY = 64 * 1024 * 1024
 SOCKET_TIMEOUT = 15
@@ -50,25 +50,36 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(raw)))
             self.send_header("Cache-Control", "no-store")
+            if self.close_connection:
+                self.send_header("Connection", "close")
             for k, v in (headers or {}).items():
                 self.send_header(k, v)
             self.end_headers()
             self.wfile.write(raw)
 
+        def _framing_error(self, code, msg):
+            self.close_connection = True
+            raise api.Err(code, msg)
+
         def _read_json_body(self):
+            te = (self.headers.get("Transfer-Encoding") or "").strip()
+            if te:
+                self._framing_error(400, "不支持 Transfer-Encoding。")
             vals = self.headers.get_all("Content-Length") or []
-            if len(vals) > 1:
-                raise api.Err(400, "Content-Length 不对。")
-            text = vals[0].strip() if vals else "0"
+            if len(vals) != 1:
+                self._framing_error(400, "Content-Length 不对。")
+            text = vals[0].strip()
             try:
                 n = int(text)
             except Exception:
-                raise api.Err(400, "Content-Length 不对。")
+                self._framing_error(400, "Content-Length 不对。")
             if n < 0:
-                raise api.Err(400, "Content-Length 不对。")
+                self._framing_error(400, "Content-Length 不对。")
             if n > MAX_BODY:
-                raise api.Err(413, "请求体太大。")
+                self._framing_error(413, "请求体太大。")
             raw = self.rfile.read(n) if n else b""
+            if len(raw) != n:
+                self._framing_error(400, "请求体不完整。")
             try:
                 return json.loads(raw.decode() or "null")
             except Exception:
@@ -113,6 +124,29 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
             return self._json(200, {"ok": True, "authenticated": False},
                               {"Set-Cookie": auth_policy.clear_session_cookie()})
 
+        def _send_sse(self, events):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Accel-Buffering", "no")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.close_connection = True
+            for ev in events:
+                raw = ("data: " + json.dumps(ev, ensure_ascii=False) + "\n\n").encode("utf-8")
+                self.wfile.write(raw)
+                self.wfile.flush()
+
+        def _chat_stream(self, body):
+            c = db.connect(conn_path)
+            try:
+                ok, events = chat.stream_events(c, body)
+                if not ok:
+                    return self._json(400, {"error": events})
+                self._send_sse(events)
+            finally:
+                c.close()
+
         def _api(self, method):
             u = urllib.parse.urlsplit(self.path)
             q = urllib.parse.parse_qs(u.query, keep_blank_values=True)
@@ -137,6 +171,8 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
                     return self._json(401, {"error": "需要认证。"})
                 if route_key in api.MUTATION_ROUTES and not self._origin_ok_for_cookie_mutation():
                     return self._json(403, {"error": "来源不允许。"})
+                if route_key == ("POST", "/api/chat") and isinstance(body, dict) and body.get("stream") is True:
+                    return self._chat_stream(body)
                 c = db.connect(conn_path)
                 try:
                     out = api.dispatch(c, method, u.path, q, body)

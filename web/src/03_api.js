@@ -29,13 +29,68 @@ const API = {
     if(!r.ok) throw new Error((j && j.error) || ("HTTP " + r.status));
     return j;
   },
-  async _post(p, body){
+  async _post(p, body, opts){
+    opts = opts || {};
     const r = await fetch(p, { method:"POST", cache:"no-store",
+      signal:opts.signal,
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify(body === undefined ? null : body) });
     const j = await r.json().catch(()=>null);
     if(!r.ok) throw new Error((j && j.error) || ("HTTP " + r.status));
     return j;
+  },
+  async _postStream(p, body, opts){
+    opts = opts || {};
+    const r = await fetch(p, { method:"POST", cache:"no-store",
+      signal:opts.signal,
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body === undefined ? null : body) });
+    if(!r.ok){
+      const j = await r.json().catch(()=>null);
+      throw new Error((j && j.error) || ("HTTP " + r.status));
+    }
+    if(!r.body || !r.body.getReader) throw new Error("这个浏览器不支持流式读取。");
+    const reader = r.body.getReader();
+    const dec = new TextDecoder("utf-8");
+    let buf = "", text = "";
+    function take(frame){
+      const lines = frame.replace(/\r/g, "").split("\n");
+      const data = [];
+      lines.forEach(line=>{
+        if(line.indexOf("data:")===0) data.push(line.slice(5).replace(/^ /,""));
+      });
+      if(!data.length) return;
+      let ev;
+      try{ ev = JSON.parse(data.join("\n")); }
+      catch(e){ throw new Error("模型返回了无法解析的流。"); }
+      if(!ev || typeof ev !== "object") return;
+      if(ev.type === "delta"){
+        text += String(ev.text || "");
+        if(opts.onText) opts.onText({ text:text, delta:String(ev.text || "") });
+      }else if(ev.type === "error"){
+        throw new Error(ev.error || "模型调用失败");
+      }else if(ev.type === "done"){
+        return "done";
+      }
+    }
+    while(true){
+      const part = await reader.read();
+      if(part.done) break;
+      buf += dec.decode(part.value, { stream:true });
+      let at;
+      while((at = buf.search(/\r?\n\r?\n/)) >= 0){
+        const frame = buf.slice(0, at);
+        const m = buf.match(/\r?\n\r?\n/);
+        buf = buf.slice(at + m[0].length);
+        if(take(frame) === "done"){
+          try{ await reader.cancel(); }catch(e){}
+          return { ok:true, text:text };
+        }
+      }
+    }
+    buf += dec.decode();
+    if(buf.trim()) take(buf);
+    return { ok:true, text:text };
   },
 
   pull(){ return this._get("/api/state"); },

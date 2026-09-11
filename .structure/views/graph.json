@@ -39,28 +39,21 @@
         "module": "backend",
         "truths": [
           {
-            "statement": "Authentication helpers live in yang/auth.py and are stdlib-only: env policy loading, weak token detection, bearer validation, HMAC signed expiring session cookies, origin matching, and bounded login throttling."
+            "statement": "POST /api/chat with body stream:true is handled by the HTTP server after private-route authentication and same-origin mutation checks, returning text/event-stream with no-store, X-Accel-Buffering:no and flushed JSON SSE events."
           },
           {
-            "statement": "In production/non-loopback startup, YANG_AUTH_TOKEN must be a strong token; loopback development without a token remains compatible, and an explicit unsafe development flag allows non-loopback no-auth construction."
+            "statement": "Chat upstream requests are OpenAI-compatible; non-stream requests remain buffered JSON responses, while stream requests send stream:true upstream and relay upstream SSE deltas incrementally as {type:\"delta\",text}, {type:\"done\"}, or sanitized {type:\"error\",error}."
           },
           {
-            "statement": "The HTTP server enforces bearer or signed session-cookie authentication for private API routes when a token is configured or production mode is active. GET /api/health is publicly available and redacts counts for anonymous users; /api/session, /api/login, and /api/logout support frontend sessions."
+            "statement": "Chat request validation rejects malformed messages, unsupported roles and bad numeric parameters before contacting upstream; upstream keys and raw upstream/internal errors are not returned to clients."
           },
           {
-            "statement": "Cookie-authenticated mutations are checked against YANG_PUBLIC_ORIGIN; explicit bearer clients may mutate cross-origin. Session cookies are HttpOnly, SameSite=Strict, expiring, and Secure in production policy."
-          },
-          {
-            "statement": "GET /api/state redacts model keys and reports keyConfigured. State/config writes preserve existing model keys by model id when omitted or blank, and clear them only when clear_key=true. Plain exports do not leak model keys."
-          },
-          {
-            "statement": "The server validates Content-Length, caps JSON request bodies, uses finite socket timeouts, returns generic internal-error responses, and resolves static file paths under the configured web root."
+            "statement": "Production auth policy always uses Secure session cookies even if YANG_AUTH_SECURE_COOKIE=0; unsupported Transfer-Encoding and invalid Content-Length/body framing are rejected and the connection is closed."
           }
         ],
         "dont_assume": [
-          "Frontend authentication UI is implemented; this task only added backend endpoints and tests.",
-          "chat.py streaming authentication behavior is changed; chat.py was not modified.",
-          "User databases, production tokens, or deployment credentials are available in the repository."
+          "Do not expose model API keys or raw upstream error bodies.",
+          "Do not assume streaming routes may skip authentication or origin checks."
         ]
       },
       "source": ".structure/modules/10e08a419e850eba1ebba18fdd28eb7ec1b7e8baa9bcc3b973e2b8891ec726be.json"
@@ -89,18 +82,18 @@
         "module": "frontend",
         "truths": [
           {
-            "statement": "The browser AI wrapper posts body.action to /api/chat whenever the call options include action."
+            "statement": "API._postStream reads fetch ReadableStream bytes with TextDecoder streaming mode, handles split UTF-8 and SSE frame boundaries, parses JSON data frames, accumulates text, calls onText incrementally, and propagates AbortSignal."
           },
           {
-            "statement": "say() forwards explicit action options to AI/AI.json, including agShape action ask and agName action name."
+            "statement": "The browser AI adapter sends stream:true only for non-JSON chat calls with onText, preserving JSON-mode and action-based model routing for ask/angle/collide/name/rewrite flows."
           },
           {
-            "statement": "actionFromPrompt preserves existing ask, angle, collide and rewrite routing by deriving those action keys from current prompt text when callers do not pass an explicit action."
+            "statement": "Existing ask/angle/collide and rewrite UI callbacks update visible prompt/redraft text as streaming deltas arrive; cancelling uses AbortController and does not persist partial generated questions."
           }
         ],
         "dont_assume": [
-          "Frontend action routing exposes no model API keys; keys stay in backend model configuration.",
-          "The local Claude extension path may bypass /api/chat because action forwarding only applies to the API-backed AI wrapper."
+          "Do not stream JSON-mode model calls unless the JSON parser path is redesigned.",
+          "Do not save a generated prompt until streaming completes and live.loading has been replaced with a final prompt."
         ]
       },
       "source": ".structure/modules/1cf387c012cd2d02f1923e589f86df4a4802427057dbc90f47b87f04d29d54bc.json"
@@ -130,15 +123,21 @@
         "module": "qa",
         "truths": [
           {
-            "statement": "tests/test_security.py uses synthetic credentials and ephemeral local HTTP servers to cover production token refusal, anonymous/public health, unauthorized private routes, login/session/logout, bearer and cookie flows, origin rejection, key redaction/preserve/clear behavior, plain export key stripping, malformed Content-Length rejection, contained static paths, non-loopback startup refusal, and legacy API health counts."
+            "statement": "tests/test_streaming.py uses ephemeral-port HTTP servers to prove the first downstream SSE delta arrives before a controlled upstream completion barrier is released."
           },
           {
-            "statement": "Current validation evidence for T-003: development_check project-tests passed with 110 tests passing; development_check web-syntax passed."
+            "statement": "Streaming regressions cover real server /api/chat SSE headers, upstream stream:true payloads, auth/origin rejection before upstream contact, invalid input, malformed upstream frames and sanitized upstream error frames."
+          },
+          {
+            "statement": "Security regressions cover production Secure-cookie override hardening, unsupported Transfer-Encoding rejection, invalid Content-Length rejection and connection-close behavior after framing errors."
+          },
+          {
+            "statement": "Required validation runners passed: project-tests reported 117 passed and 0 failed; web-syntax reported Web source syntax and top-level symbols passed."
           }
         ],
         "dont_assume": [
-          "Security tests use real production credentials; all tokens and origins in tests are synthetic.",
-          "Passing backend tests means frontend authentication UI is implemented; that is a later task."
+          "An incidental socket reset traceback during the connection-close regression is not a test failure when project-tests exits 0.",
+          "Do not count subagent isolated changes as applied unless explicitly accepted; the worker result was inspected and discarded in favor of parent-integrated changes."
         ]
       },
       "source": ".structure/modules/3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392.json"
@@ -264,6 +263,49 @@
       }
     },
     {
+      "id": "work:DEV-4e0ca6f5e5ca",
+      "type": "work_item",
+      "label": "# T-001: Real SSE streaming and cancellation\n\nUse the installed harness for this project. The user authorized the entire development plan, but this task does not deploy anything.\n\nPlan modules backend, frontend, qa; scope yang/chat.py, yang/server.py, yang/auth.py, web/src/03_api.js, web/src/04_agent.js, web/src/06_idea.js, tests/test_chat.py, tests/test_streaming.py, tests/test_security.py. Kind feature, impact behavior.\n\nAcceptance:\n1. POST /api/chat with stream=true forwards stream=true to the selected O",
+      "data": {
+        "schema_version": 2,
+        "title": "# T-001: Real SSE streaming and cancellation\n\nUse the installed harness for this project. The user authorized the entire development plan, but this task does not deploy anything.\n\nPlan modules backend, frontend, qa; scope yang/chat.py, yang/server.py, yang/auth.py, web/src/03_api.js, web/src/04_agent.js, web/src/06_idea.js, tests/test_chat.py, tests/test_streaming.py, tests/test_security.py. Kind feature, impact behavior.\n\nAcceptance:\n1. POST /api/chat with stream=true forwards stream=true to the selected O",
+        "kind": "feature",
+        "impact": "behavior",
+        "modules": [
+          "backend",
+          "frontend",
+          "qa"
+        ],
+        "scope": [
+          "yang/chat.py",
+          "yang/server.py",
+          "yang/auth.py",
+          "web/src/03_api.js",
+          "web/src/04_agent.js",
+          "web/src/06_idea.js",
+          "tests/test_chat.py",
+          "tests/test_streaming.py",
+          "tests/test_security.py"
+        ],
+        "acceptance": [
+          "POST /api/chat with stream=true forwards stream=true to selected OpenAI-compatible upstream and relays real SSE deltas as they arrive using event data objects for delta/done/error, with correct SSE headers and flushing; non-stream response remains compatible.",
+          "Private route authentication and same-origin checks run before streaming; invalid input is clearly rejected; upstream keys and raw internal error details are not exposed in stream or non-stream errors.",
+          "Frontend stream parsing handles split UTF-8 chunks/frames, accumulates text, invokes existing onText callbacks incrementally, passes AbortSignal, preserves action-based model routing and JSON-mode outputs, and current ask/angle/collide UI visibly updates while generated text arrives.",
+          "Cancelling generation aborts fetch, does not save a partial generated question, closes downstream/upstream responses, and avoids fake streaming by splitting a buffered answer.",
+          "Ephemeral-port HTTP tests prove first delta is received before a controlled upstream completion barrier is released; cover upstream errors and malformed frames; preserve current routing tests and web syntax checks.",
+          "Authentication regressions fixed: production cannot disable Secure cookies using YANG_AUTH_SECURE_COOKIE=0; unsupported Transfer-Encoding is rejected; invalid Content-Length/body framing errors close connections; focused regressions added.",
+          "Run project-tests and web-syntax via development_check, synchronize backend/frontend/qa knowledge, and finish with exact acceptance evidence."
+        ],
+        "id": "DEV-4e0ca6f5e5ca",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-11T11:48:55.344477+00:00",
+        "updated_at": "2026-09-11T11:53:25.058603+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
+    },
+    {
       "id": "event:75d31cce997d48f395da0fe78f8432b8",
       "type": "event",
       "label": "initialized",
@@ -347,6 +389,24 @@
     {
       "id": "28df0ec1a7b6f2b7e218d5a5cb0902e018a54769db49b3715b8e3f66f535f411",
       "source": "work:DEV-ab6fdbe44d9e",
+      "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "24246a2917ae0a13a72e369c9901645fbf75cf9ef22560b1bbd24c8480e44e4b",
+      "source": "work:DEV-4e0ca6f5e5ca",
+      "target": "module:backend",
+      "type": "affects"
+    },
+    {
+      "id": "ebfec4b495961cb511d0714b6deb29ef9fc52413f9af3822d7a518e010c8ff4a",
+      "source": "work:DEV-4e0ca6f5e5ca",
+      "target": "module:frontend",
+      "type": "affects"
+    },
+    {
+      "id": "57326cb0ec1a5a7ab1d4fefda79767b8327300e8dbe5a08804592b84192bc6dd",
+      "source": "work:DEV-4e0ca6f5e5ca",
       "target": "module:qa",
       "type": "affects"
     },

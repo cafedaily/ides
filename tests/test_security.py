@@ -173,7 +173,16 @@ def test_plain_export_never_leaks_keys(tmp_path):
         srv.shutdown()
 
 
-def test_malformed_content_length_rejected(tmp_path):
+def test_production_secure_cookie_cannot_be_disabled_by_env():
+    p = auth.load_policy_from_env({
+        "YANG_PRODUCTION": "1",
+        "YANG_AUTH_TOKEN": TOKEN,
+        "YANG_AUTH_SECURE_COOKIE": "0",
+    }, host="0.0.0.0")
+    assert p.production and p.secure_cookie is True
+
+
+def test_malformed_content_length_rejected_and_connection_closed(tmp_path):
     srv, base = start(tmp_path)
     try:
         host, port = base.split("//", 1)[1].split(":")
@@ -184,6 +193,32 @@ def test_malformed_content_length_rejected(tmp_path):
         conn.endheaders()
         resp = conn.getresponse()
         assert resp.status == 400
+        resp.read()
+        assert resp.getheader("Connection") == "close"
+        try:
+            conn.request("GET", "/api/health")
+            again = conn.getresponse()
+            assert again.status != 200
+        except Exception:
+            pass
+        conn.close()
+    finally:
+        srv.shutdown()
+
+
+def test_unsupported_transfer_encoding_rejected_and_connection_closed(tmp_path):
+    srv, base = start(tmp_path)
+    try:
+        host, port = base.split("//", 1)[1].split(":")
+        conn = http.client.HTTPConnection(host, int(port), timeout=5)
+        conn.putrequest("POST", "/api/login")
+        conn.putheader("Content-Type", "application/json")
+        conn.putheader("Transfer-Encoding", "chunked")
+        conn.endheaders()
+        resp = conn.getresponse()
+        assert resp.status == 400
+        assert "Transfer-Encoding" in resp.read().decode()
+        assert resp.getheader("Connection") == "close"
         conn.close()
     finally:
         srv.shutdown()

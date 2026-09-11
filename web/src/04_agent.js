@@ -18,7 +18,9 @@ async function _initAI(){
       const body = { messages:msgs };
       if(opts.json) body.json = true;
       if(opts.action) body.action = opts.action;
-      const r = await API._post("/api/chat", body);
+      if(opts.onText && !opts.json) body.stream = true;
+      const r = body.stream ? await API._postStream("/api/chat", body, { signal:opts.signal, onText:opts.onText })
+                            : await API._post("/api/chat", body, { signal:opts.signal });
       if(!r.ok) throw new Error(r.error || "模型调用失败");
       const text = (r.text || "").trim();
       if(opts.json){ try{ return JSON.parse(text); }catch(e){ return null; } }

@@ -11,6 +11,7 @@
 - .github/copilot-instructions.md
 - docs/AGENT_ASSIGNMENT_AUTH.md
 - docs/AGENT_ASSIGNMENT_ROUTING.md
+- docs/AGENT_ASSIGNMENT_STREAM.md
 - docs/DEVELOPMENT_PLAN.md
 - docs/HARNESS_FINDINGS.md
 - docs/LEGACY_BACKLOG.md
@@ -24,6 +25,7 @@
 - tests/test_graph.py
 - tests/test_jsonl.py
 - tests/test_security.py
+- tests/test_streaming.py
 - tests/test_terms.py
 - tests/test_text.py
 - web/build.py
