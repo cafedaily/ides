@@ -1,0 +1,31 @@
+---
+description: .structure/ 项目状态协议
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# .structure/ 协议（Cursor 适配）
+
+本项目使用 `.structure/` 管理 AI 开发状态。
+
+## 启动流程
+
+1. 读 `.structure/state.json` → 当前阶段
+2. 读 `.structure/tree.md` → 模块地图
+3. 改哪个模块就读那个模块的 `.structure/STATUS.md`
+
+## 硬规则
+
+- 一模块一锁：写代码前在 STATUS.md 写入 LOCK 章节
+- 完成必更新：changelog + tree.md + STATUS.md + 释放锁，和代码同 commit
+- 防幻觉：改代码前读目标模块 STATUS.md 的「不要假设」章节
+- 渐进式披露：不要一次读完所有 .structure/ 文件
+
+## 红线耦合
+
+- `yang/jsonl.py` ↔ `web/src/yangdata.js`（同构，必须同步改）
+- `yang/api.py` 路由 ↔ `web/src/03_api.js`
+
+## 完整契约
+
+见 `.structure/AGENT.md`

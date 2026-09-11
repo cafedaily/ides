@@ -1,30 +1,45 @@
-# .structure/ — 项目全局状态索引
+# .structure/ — 项目状态索引
 
-> 给下一个读代码的人（包括未来的自己和 AI）一份地图。
-> 代码会变，这里只写**不容易从代码本身读出来的东西**：
-> 为什么这么做、什么和什么耦合、现在的状态是什么。
+> 代码会变，这里只写**不容易从代码本身读出来的东西**。
 
 ## 入口
 
 | 文件 | 读者 | 内容 |
 |---|---|---|
-| [STRUCTURE.md](STRUCTURE.md) | **人** | 开发指导手册：怎么用、怎么维护 .structure/ |
-| [AGENT.md](AGENT.md) | **AI** | 智能体协议：身份、边界、模块锁、行为规则 |
+| [STRUCTURE.md](STRUCTURE.md) | **人** | 开发指导手册 v1.1 |
+| [AGENT.md](AGENT.md) | **AI** | 智能体契约（系统提示词） |
+| [AGENTS.md](../AGENTS.md) | **所有 AI 工具** | 工具无关的入口指针 |
 
-## 项目状态
+## 运行时状态
 
 | 文件 | 内容 |
 |---|---|
-| [tree.md](tree.md) | 模块树 + 状态标记（项目全貌） |
-| [overview.md](overview.md) | 项目是什么、数字、技术栈选择 |
-| [files.md](files.md) | 全部源文件清单：行数、职责、依赖关系 |
-| [dataflow.md](dataflow.md) | 文本→词条→图谱、前后端同步、LLM 调用链、导出格式 |
-| [coupling.md](coupling.md) | 必须一起改的地方（红线/黄线）、字符集不对称性 |
-| [api.md](api.md) | 全部 HTTP 接口：方法、路径、参数、响应 |
-| [debts.md](debts.md) | 已知欠账（带「怎么还」）、已解决的、不打算做的 |
-| [tests.md](tests.md) | 测试状态、各模块覆盖、跨语言对照 |
+| [state.json](state.json) | 当前阶段、最近门禁 |
+| [manifest.yaml](manifest.yaml) | 模块树 + 权限 + 耦合 |
+| [tree.md](tree.md) | 模块地图（一屏全貌） |
 
-## 子模块状态
+## 项目知识
+
+| 文件 | 内容 |
+|---|---|
+| [overview.md](overview.md) | 项目概况、数字、技术栈 |
+| [files.md](files.md) | 文件清单：行数、职责、依赖 |
+| [dataflow.md](dataflow.md) | 端到端数据流 |
+| [coupling.md](coupling.md) | 耦合关系（红线/黄线） |
+| [api.md](api.md) | HTTP 接口 |
+| [debts.md](debts.md) | 已知欠账 |
+| [tests.md](tests.md) | 测试状态 |
+
+## 流程
+
+| 目录 | 内容 |
+|---|---|
+| [human-gates/](human-gates/) | 人工介入日志（门禁记录） |
+| [phases/](phases/) | 阶段跃迁记录 |
+| [changelog/](changelog/) | 变更日志 |
+| [tasks/](tasks/) | 任务队列 |
+
+## 子模块
 
 | 模块 | STATUS.md | 职责 |
 |---|---|---|
@@ -32,9 +47,16 @@
 | 前端 | [web/.structure/STATUS.md](../web/.structure/STATUS.md) | UI、离线存储、智能体调用 |
 | 测试 | [tests/.structure/STATUS.md](../tests/.structure/STATUS.md) | 94 条测试、跨语言对照 |
 
-## 变更日志
+## 自动化脚本
 
-| 日期 | 文件 | 摘要 |
-|---|---|---|
-| 2026-09-09 | [entity-layer](changelog/2026-09-09_entity-layer.md) | 跨语料实体归并 |
-| 2026-09-11 | [llm-chat-proxy](changelog/2026-09-11_llm-chat-proxy.md) | LLM 接入 + 运行时安装 |
+| 脚本 | 用途 |
+|---|---|
+| `scripts/init_from_existing.py` | 已有项目全景分析 |
+| `scripts/advance_phase.py` | 阶段跃迁 |
+| `scripts/record_gate.py` | 记录人工门禁 |
+| `scripts/scaffold_modules.py` | 生成子模块骨架 |
+| `scripts/verify_structure.py` | 校验完整性 |
+| `scripts/acquire_lock.py` | 模块锁管理 |
+| `scripts/render_context.py` | 上下文拼装 |
+| `scripts/mcp_server.py` | MCP 服务器 |
+| `scripts/pre_commit_hook.py` | Git pre-commit 钩子 |
