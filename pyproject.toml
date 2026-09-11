@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yang-xiangfa"
+version = "0.1.0"
+description = "养想法：一个人的想法空间，带关键词图谱的本地后端"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []          # 标准库够用。加密导出要 cryptography，见 [project.optional-dependencies]
+
+[project.optional-dependencies]
+crypto = ["cryptography>=41"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+yang = "yang.cli:main"
+
+[tool.setuptools]
+packages = ["yang"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

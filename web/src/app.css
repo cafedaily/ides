@@ -1,0 +1,198 @@
+:root{
+  --paper:#F2F0EA; --sheet:#FCFBF7; --sunk:#E7E4DB;
+  --ink:#1C1A16; --ink2:#5A554C; --ink3:#8E887C;
+  --line:#DEDACF; --line2:#C7C2B4;
+  --grow:#2F7D5C; --grow-soft:#DFEDE5;
+  --seedc:#8E887C;
+  --shadow:0 1px 3px rgba(28,26,22,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#16150F; --sheet:#1E1C16; --sunk:#26241D;
+    --ink:#EFEDE5; --ink2:#ABA598; --ink3:#7E786C;
+    --line:#2E2B22; --line2:#413D32;
+    --grow:#63C297; --grow-soft:#12312339;
+    --seedc:#7E786C;
+    --shadow:0 1px 3px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16150F; --sheet:#1E1C16; --sunk:#26241D;
+  --ink:#EFEDE5; --ink2:#ABA598; --ink3:#7E786C;
+  --line:#2E2B22; --line2:#413D32;
+  --grow:#63C297; --grow-soft:#12312339;
+  --seedc:#7E786C;
+  --shadow:0 1px 3px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);
+  font-family:"Noto Sans SC","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+  font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
+button,input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--grow);outline-offset:2px}
+.d{font-family:"ZCOOL XiaoWei","Noto Serif SC",serif;font-weight:400;letter-spacing:.04em}
+
+.wrap{max-width:580px;margin-inline:auto;padding:10px 18px 130px}
+header.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+header.top .in{max-width:580px;margin-inline:auto;padding:14px 18px 0;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand{font-family:"ZCOOL XiaoWei",serif;font-size:22px;letter-spacing:.14em}
+.brand em{font-style:normal;color:var(--grow)}
+.sub{font-size:12.5px;color:var(--ink3)}
+.tabs{display:flex;gap:24px;width:100%;margin-top:10px}
+.tabs button{background:none;border:0;padding:8px 0 11px;cursor:pointer;color:var(--ink3);
+  font-size:15px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--grow)}
+.tabs .n{font-size:12px;margin-left:5px;color:var(--ink3)}
+
+h1.big{font-family:"ZCOOL XiaoWei",serif;font-size:29px;line-height:1.4;margin:24px 0 6px}
+.lede{color:var(--ink2);font-size:14.5px;margin:0 0 20px;line-height:1.85}
+.view{display:none}.view.on{display:block}
+
+/* 想法列表 */
+.slip{background:var(--sheet);border:1px solid var(--line);border-radius:3px 14px 3px 14px;
+  padding:19px 19px;margin-bottom:13px;box-shadow:var(--shadow);cursor:pointer}
+.slip:active{background:var(--sunk)}
+.slip h3{margin:0 0 7px;font-family:"ZCOOL XiaoWei",serif;font-size:20px;line-height:1.45;font-weight:400}
+.slip .now{margin:0;font-size:14.5px;line-height:1.85;color:var(--ink2);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.slip .now.none{color:var(--ink3)}
+.slip .meta{margin:12px 0 0;font-size:12.5px;color:var(--ink3);display:flex;gap:14px;flex-wrap:wrap}
+.rings{display:inline-flex;gap:3px;align-items:center}
+.rings i{width:6px;height:6px;border-radius:50%;background:var(--grow);opacity:.85;display:block}
+
+/* 想法详情 */
+.back{background:none;border:0;color:var(--ink3);cursor:pointer;padding:10px 0;font-size:14.5px}
+h2.title{font-family:"ZCOOL XiaoWei",serif;font-size:27px;line-height:1.4;margin:6px 0 10px;font-weight:400}
+.seed{border-left:2px solid var(--line2);padding:2px 0 2px 13px;margin:0 0 22px;
+  color:var(--seedc);font-size:14px;line-height:1.85}
+.seed b{display:block;font-size:11.5px;letter-spacing:.1em;margin-bottom:3px;opacity:.85}
+
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:14px;
+  padding:20px;box-shadow:var(--shadow)}
+.sheet .lab{font-size:12.5px;color:var(--ink3);letter-spacing:.06em;margin:0 0 10px}
+.nowtext{font-size:17px;line-height:1.9;margin:0;white-space:pre-wrap;min-height:2em}
+.nowtext.none{color:var(--ink3);font-size:15.5px}
+.sheet textarea{width:100%;background:var(--paper);border:1px solid var(--line2);border-radius:10px;
+  padding:13px 14px;font-size:16px;line-height:1.85;resize:vertical}
+.sheet textarea:focus{border-color:var(--grow);outline:none}
+
+.acts{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:16px 0 0}
+.acts button{background:var(--sheet);border:1px solid var(--line2);border-radius:11px;
+  padding:14px 10px;cursor:pointer;font-size:15px;line-height:1.4;color:var(--ink)}
+.acts button:active{background:var(--sunk)}
+.acts button b{display:block;font-weight:500}
+.acts button span{display:block;font-size:11.5px;color:var(--ink3);margin-top:3px}
+
+/* 抽到的提示 */
+.prompt{background:var(--grow-soft);border:1px solid var(--grow);border-radius:14px;
+  padding:19px;margin-top:14px}
+.prompt .kind{font-size:12px;color:var(--grow);letter-spacing:.08em;margin:0 0 9px}
+.prompt .q{font-family:"ZCOOL XiaoWei",serif;font-size:20px;line-height:1.6;margin:0 0 14px}
+.prompt textarea{width:100%;background:var(--sheet);border:1px solid var(--line2);
+  border-radius:10px;padding:13px 14px;line-height:1.85;resize:vertical}
+.prompt textarea:focus{border-color:var(--grow);outline:none}
+.prow{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.prow button{border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--line2);
+  background:none;font-size:14.5px;flex:1 1 auto}
+.prow button.main{background:var(--grow);border-color:var(--grow);color:var(--sheet)}
+.prow button:active{opacity:.85}
+.prompt .hint{font-size:12.5px;color:var(--ink2);margin:9px 0 0;line-height:1.7}
+.prompt .q.wait{color:var(--ink3)}
+.prompt .q.wait::after{content:"…";animation:bl 1.1s steps(1) infinite}
+@keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+.tinybtn{margin-top:14px;background:none;border:1px dashed var(--line2);border-radius:9px;
+  padding:8px 13px;font-size:13px;color:var(--ink2);cursor:pointer}
+.tinybtn:active{background:var(--sunk)}
+.top .right{margin-left:auto;display:flex;gap:4px}
+.top .right button{background:none;border:1px solid var(--line);border-radius:8px;
+  padding:5px 11px;font-size:12.5px;color:var(--ink2);cursor:pointer;min-height:32px}
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:14px;
+  padding:17px 18px;margin-bottom:13px;box-shadow:var(--shadow)}
+.card>h3{margin:0 0 4px;font-size:15.5px;font-weight:500}
+p.h{margin:0 0 13px;font-size:12.5px;line-height:1.8;color:var(--ink3)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;
+  border-bottom:1px solid var(--line);font-size:13.5px}
+.kv:last-child{border-bottom:0}
+.kv span:last-child{color:var(--ink2);text-align:right}
+.fld{margin-bottom:13px}
+.fld>label{display:block;font-size:12.5px;color:var(--ink3);margin-bottom:5px}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--paper);
+  border:1px solid var(--line2);border-radius:10px;padding:11px 13px;min-height:44px;
+  font-size:14.5px;line-height:1.6}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--grow);outline:none}
+.note{margin:5px 0 0;font-size:11.5px;line-height:1.7;color:var(--ink3)}
+.chk{display:flex;align-items:flex-start;gap:11px;padding:11px 0;cursor:pointer}
+.chk input{width:20px;height:20px;margin:3px 0 0;flex:0 0 auto;accent-color:var(--grow)}
+.chk b{display:block;font-weight:400;font-size:14.5px;line-height:1.5}
+.chk span{display:block;font-size:11.5px;line-height:1.7;color:var(--ink3)}
+.brow{display:flex;gap:9px;flex-wrap:wrap;margin-top:6px}
+.brow button{flex:1 1 auto;border-radius:10px;padding:10px 15px;min-height:44px;
+  font-size:14.5px;border:1px solid var(--line2);background:none;cursor:pointer}
+.brow button.main{background:var(--grow);border-color:var(--grow);color:var(--sheet)}
+.brow button:disabled{opacity:.45;cursor:default}
+.rep{margin-top:13px;border-radius:12px;padding:13px 15px;font-size:13px;line-height:1.85}
+.rep.good{background:var(--grow-soft);border:1px solid var(--grow)}
+.rep.bad{background:var(--sunk);border:1px solid var(--line2)}
+.rep b{display:block;font-weight:500;margin-bottom:5px}
+.rep ul{margin:6px 0 0;padding-left:18px}
+.rep li{margin-bottom:3px;color:var(--ink2)}
+.rep code{font-size:12px;color:var(--ink3)}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pills button{border-radius:999px;padding:8px 14px;min-height:40px;font-size:13.5px;
+  border:1px solid var(--line2);background:var(--sheet);color:var(--ink2);cursor:pointer}
+.pills button[aria-pressed="true"]{background:var(--grow-soft);border-color:var(--grow);
+  color:var(--ink);font-weight:500}
+.danger2{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  word-break:break-all;line-height:1.7}
+
+/* 生长记录 */
+.hsec{margin:30px 0 12px;font-size:12.5px;color:var(--ink3);letter-spacing:.08em;
+  display:flex;align-items:center;gap:10px}
+.hsec::after{content:"";flex:1;height:1px;background:var(--line)}
+.item{border-left:2px solid var(--line2);padding:0 0 20px 15px;position:relative;margin-left:4px}
+.item::before{content:"";position:absolute;left:-5px;top:7px;width:8px;height:8px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--line2)}
+.item.ask::before{border-color:var(--grow)}
+.item .k{font-size:11.5px;color:var(--ink3);letter-spacing:.08em;margin:0 0 4px}
+.item .q{margin:0 0 7px;font-size:14.5px;line-height:1.75;color:var(--ink2)}
+.item .a{margin:0;font-size:15.5px;line-height:1.9;white-space:pre-wrap}
+.item .del{background:none;border:0;color:var(--ink3);cursor:pointer;font-size:12.5px;padding:6px 0 0}
+.item:last-child{padding-bottom:6px}
+
+.danger{margin-top:26px}
+.danger button{width:100%;background:none;border:1px solid var(--line2);border-radius:11px;
+  padding:13px;cursor:pointer;color:var(--ink3);font-size:14.5px}
+
+/* 凉了 */
+.cold{border:1px dashed var(--line2);border-radius:14px;padding:18px;margin-bottom:12px}
+.cold h3{margin:0 0 8px;font-family:"ZCOOL XiaoWei",serif;font-size:18px;font-weight:400;color:var(--ink2)}
+.cold p{margin:0;font-size:14.5px;line-height:1.9}
+.cold p b{display:block;font-size:11.5px;color:var(--ink3);letter-spacing:.08em;margin-bottom:4px;font-weight:400}
+.cold .when{margin:10px 0 0;font-size:12.5px;color:var(--ink3)}
+
+.empty{text-align:center;color:var(--ink3);font-size:14.5px;line-height:2.1;padding:46px 12px}
+.foot{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--ink3);line-height:1.9}
+.foot button{background:none;border:0;color:var(--ink3);text-decoration:underline;
+  cursor:pointer;padding:0;font-size:12.5px}
+
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:25;
+  background:var(--ink);color:var(--paper);border:0;border-radius:999px;
+  padding:14px 26px;font-size:15.5px;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.2)}
+.fab:active{opacity:.88}
+
+/* 新想法 */
+.newbox{margin-top:10px}
+.newbox .q{font-family:"ZCOOL XiaoWei",serif;font-size:25px;line-height:1.5;margin:0 0 8px}
+.newbox .h{color:var(--ink2);font-size:14.5px;line-height:1.85;margin:0 0 18px}
+.newbox textarea{width:100%;background:var(--sheet);border:1px solid var(--line2);
+  border-radius:12px;padding:15px;font-size:17px;line-height:1.85;resize:vertical}
+.newbox textarea:focus{border-color:var(--grow);outline:none}
+.newbox .btn{width:100%;margin-top:14px;background:var(--grow);color:var(--sheet);
+  border:0;border-radius:11px;padding:14px;font-size:15.5px;cursor:pointer}
+.hintlist{margin:18px 0 0;padding:14px 16px;background:var(--sunk);border-radius:11px;
+  font-size:13.5px;line-height:1.95;color:var(--ink2)}
+.hintlist b{display:block;font-size:11.5px;color:var(--ink3);letter-spacing:.08em;margin-bottom:5px;font-weight:400}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}

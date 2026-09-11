@@ -1,0 +1,83 @@
+
+/* ===== 想法空间：底部四个入口 ===== */
+.wrap{padding-bottom:150px}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:var(--paper);border-top:1px solid var(--line);
+  padding:5px 6px calc(9px + env(safe-area-inset-bottom,0px))}
+.nav button{flex:1;min-height:50px;background:none;border:0;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--ink3);padding:0}
+.nav button span{font-size:10.5px;line-height:1}
+.nav button[aria-selected="true"]{color:var(--grow)}
+.nav button[aria-selected="true"] span{font-weight:500}
+.fab{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+
+.subtabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin:0 0 18px}
+.subtabs button{background:none;border:0;padding:9px 0 11px;cursor:pointer;color:var(--ink3);
+  font-size:15px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.subtabs button[aria-selected="true"]{color:var(--ink);border-color:var(--grow)}
+.subtabs .n{font-size:12px;color:var(--ink3)}
+
+.slip.big2{border-radius:3px 16px 3px 16px;padding:19px}
+.slip .tag,.tag{margin:0 0 8px;font-size:11.5px;letter-spacing:.1em;color:var(--grow)}
+.slip .why,.why{margin:0 0 14px;font-size:14px;line-height:1.8;color:var(--ink2)}
+.slip.big2 h3{margin:0 0 9px;font-family:"ZCOOL XiaoWei",serif;font-size:20px;
+  line-height:1.45;font-weight:400}
+
+.mini{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--sheet);
+  border:1px solid var(--line);border-radius:12px;margin-bottom:9px;cursor:pointer}
+.mini:active{background:var(--sunk)}
+.mini.dash{background:var(--sunk);border-style:dashed;border-color:var(--line2)}
+.mini .l{flex:1;min-width:0}
+.mini .t{margin:0 0 2px;font-size:15.5px;line-height:1.45}
+.mini .t.d{font-family:"ZCOOL XiaoWei",serif}
+.mini .m{margin:0;font-size:12px;line-height:1.6;color:var(--ink3)}
+.mini .chev{font-size:20px;color:var(--ink3)}
+.rings i.hollow{background:none;border:1px solid var(--line2)}
+
+.spark{padding:14px 15px 11px;background:var(--sheet);border:1px solid var(--line);
+  border-radius:12px;margin-bottom:10px}
+.spark .t{margin:0 0 3px;font-size:15px;line-height:1.7}
+.spark .m{margin:0 0 10px;font-size:11.5px;color:var(--ink3)}
+button.main2{background:var(--grow-soft);border:1px solid var(--grow);color:var(--grow);
+  border-radius:9px;padding:8px 14px;font-size:13.5px;min-height:40px;cursor:pointer;flex:0 0 auto}
+
+.tomb{padding:16px 17px;background:var(--sunk);border:1px solid var(--line);
+  border-radius:12px;margin-bottom:11px}
+.tomb h3{margin:0 0 8px;font-family:"ZCOOL XiaoWei",serif;font-size:17px;line-height:1.45;
+  font-weight:400;color:var(--ink2)}
+.tomb .why2{margin:0 0 8px;font-size:14px;line-height:1.85}
+.tomb .meta{display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--ink3)}
+
+.starbox{background:var(--sheet);border:1px solid var(--line);border-radius:14px;
+  padding:8px 6px;box-shadow:var(--shadow);margin-bottom:14px}
+.pairline{margin:0 0 10px;font-size:13px;color:var(--ink2)}
+.prompt .body{margin:0;font-size:15px;line-height:1.9;white-space:pre-wrap}
+
+.fork{background:var(--sheet);border:1px solid var(--line);border-radius:11px;
+  padding:13px 14px;margin-bottom:9px}
+.fork .t{margin:0 0 4px;font-size:16px;line-height:1.45}
+.fork .w{margin:0 0 10px;font-size:13px;line-height:1.75;color:var(--ink2)}
+
+.titlerow{display:flex;align-items:flex-start;gap:10px}
+.titlerow .title{flex:1}
+button.tiny{flex:0 0 auto;margin-top:14px;background:none;border:1px dashed var(--line2);
+  border-radius:9px;padding:6px 11px;font-size:12.5px;color:var(--ink2);cursor:pointer;min-height:34px}
+
+/* 语音 */
+.spk{display:block}
+.spkrow{display:flex;align-items:center;gap:10px;margin-top:8px}
+button.mic{display:inline-flex;align-items:center;gap:6px;background:var(--sheet);
+  border:1px solid var(--line2);border-radius:999px;padding:7px 14px;min-height:38px;
+  font-size:13px;color:var(--ink2);cursor:pointer}
+button.mic[aria-pressed="true"]{background:var(--grow-soft);border-color:var(--grow);color:var(--grow)}
+button.mic[aria-pressed="true"] svg{animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.spkhint{font-size:11.5px;color:var(--ink3);line-height:1.6}
+.note2{margin:14px 0 0;font-size:12.5px;line-height:1.9;color:var(--ink3)}
+.prompt .q.wait{color:var(--ink3)}
+.prompt .q.wait::after{content:"…";animation:pulse 1.1s steps(1) infinite}
+.prompt .hint{font-size:12.5px;color:var(--ink2);margin:9px 0 0;line-height:1.7}
+.prompt textarea{width:100%}
+.sheet textarea{width:100%}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
