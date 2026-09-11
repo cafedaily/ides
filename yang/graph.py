@@ -25,32 +25,10 @@ MIN_NPMI = 0.15
 TOP_SIM = 6
 
 
-def build(docs):
-    """docs: [{id, kind, title, pieces}] → 图。kind ∈ idea|cold|spark"""
-    terms = extract(docs)
-    by_id = {d["id"]: d for d in docs}
-
-    nodes, edges = [], []
-    for d in docs:
-        nodes.append({"id": "idea:" + d["id"], "type": d["kind"],
-                      "label": d["title"], "ref": d["id"],
-                      "n_terms": len(terms[d["id"]])})
-    seen_t = {}
-    for did, items in terms.items():
-        for it in items:
-            k = "term:" + it["term"]
-            if k not in seen_t:
-                seen_t[k] = {"id": k, "type": "term", "label": it["term"],
-                             "ref": it["term"], "docs": 0, "w": 0.0}
-                nodes.append(seen_t[k])
-            seen_t[k]["docs"] += 1
-            seen_t[k]["w"] = round(seen_t[k]["w"] + it["w"], 5)
-            edges.append({"a": "idea:" + did, "b": k, "type": "has",
-                          "w": it["w"], "dims": it["dims"]})
-
-    return {"nodes": nodes, "edges": edges, "terms": terms,
-            "cooc": cooccurrence(terms), "sim": similarity(terms),
-            "bridges": bridges(terms, by_id)}
+def build(docs, settings=None):
+    """Full reference build using the same semantics as the incremental engine."""
+    from .graph_engine import GraphCache
+    return GraphCache().update(docs, settings=settings, force=True)
 
 
 def cooccurrence(terms, min_npmi=MIN_NPMI):

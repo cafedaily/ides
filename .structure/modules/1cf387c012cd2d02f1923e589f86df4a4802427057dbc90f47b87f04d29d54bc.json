@@ -10,6 +10,15 @@
     },
     {
       "statement": "Existing ask/angle/collide and rewrite UI callbacks update visible prompt/redraft text as streaming deltas arrive; cancelling uses AbortController and does not persist partial generated questions."
+    },
+    {
+      "statement": "Demo and private local storage namespaces are isolated. Private state loads only after session verification; logout clears rendered private content and preserves unsynced drafts."
+    },
+    {
+      "statement": "Captured sync snapshots queue edits during requests and use a baseline/local/remote comparison for explicit conflict resolution."
+    },
+    {
+      "statement": "Streaming truncation is an error. Blob exports, validated imports, editable graph settings and optional semantic recall are available."
     }
   ],
   "dont_assume": [

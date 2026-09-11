@@ -206,12 +206,14 @@ function listSpark(r){
   r.appendChild(el("p","note2","放久了的念头会自己往下沉，不会被删。沉到底还想得起来的，通常值得养。"));
 }
 async function grow(k){
+  const epoch=workspaceEpoch;
   shaping=k.id; vList();
   let sh;
   try{ sh = await agShape(k.text); }
   catch(e){ sh = { title:k.text.slice(0,14), seed:k.text, first:pick(ASK,[]) }; }
   shaping=null;
   const n={ id:uid(), title:sh.title, seed:sh.seed, now:"", grew:[], created:Date.now() };
+  if(epoch!==workspaceEpoch) return;
   S.ideas.unshift(n);
   S.sparks=S.sparks.filter(x=>x.id!==k.id);
   save();

@@ -1,91 +1,58 @@
-"""把候选词条压成每篇的关键词，带权重和「出现在哪个维度」。
-
-维度就是这段话在应用里的身份：最初那句、现在它是什么、追问、换个角度、
-碰一下、随手记、为什么凉了、还没成形的念头。同一个词出现在不同维度上，
-是后面找「桥」的全部依据。
-"""
+"""Dimension-weighted TF-IDF with shared full/incremental scoring."""
 import math
 from collections import Counter, defaultdict
-
-from . import entity
+from . import entity, quality
 from .text import GENERIC, NUM_HEAD, candidates
 
-# 维度权重：标题和「现在它是什么」是他反复改过的，比一次性的回答更能代表这个想法
-DIM_W = {
-    "title": 1.7, "now": 1.35, "seed": 1.2,
-    "ask": 1.0, "angle": 1.0, "collide": 1.0, "note": 0.9,
-    "why": 1.3, "spark": 1.1,
-}
+DIM_W = {"title":1.7,"now":1.35,"seed":1.2,"ask":1.0,"angle":1.0,"collide":1.0,"note":0.9,"why":1.3,"spark":1.1}
 DIMS = tuple(DIM_W)
-
-TOP_N = 24
-MIN_W = 0.04
-GENERIC_W = 0.45      # 时间/数量词降一档：它们能把任何两件事连起来，那就不算连接
+TOP_N, MIN_W, GENERIC_W = 24, 0.04, 0.45
 
 
 def _doc_terms(doc, entities=None):
-    """一篇里每个词条的加权词频，以及它出现过的维度。"""
-    tf = Counter()
-    dims = defaultdict(Counter)
-    for p in doc["pieces"]:
-        dim = p["dim"]
-        w = DIM_W.get(dim, 1.0)
-        for term, c in candidates(p["text"], entities).items():
-            tf[term] += c * w
-            dims[term][dim] += c
+    tf, dims = Counter(), defaultdict(Counter)
+    for piece in doc["pieces"]:
+        dim = piece["dim"]
+        for term, count in candidates(piece["text"], entities).items():
+            tf[term] += count * DIM_W.get(dim, 1.0)
+            dims[term][dim] += count
     return tf, dims
 
 
-def extract(docs, top_n=TOP_N, min_w=MIN_W, entities=None):
-    """docs: [{id, kind, title, pieces:[{dim,text}]}] → {doc_id: [term dict]}
-
-    先扫一遍全语料认实体（`entity.discover`），再逐篇抽词。两遍是必须的：
-    「定期见面」在每篇里只说一次，逐篇的眼光看不见它，只有把所有篇放在一起
-    才能看出这四个字总是一起出现。`entities` 传进来就跳过第一遍，给测试和
-    需要固定词表的场合用。
-
-    IDF 用平滑过的：语料只有几十篇，不平滑的话一个只出现一次的词会被吹到天上。
-    """
-    if entities is None:
-        entities = entity.discover(
-            p["text"] for d in docs for p in d["pieces"])
-    raw = {}
-    df = Counter()
-    for d in docs:
-        tf, dims = _doc_terms(d, entities)
-        raw[d["id"]] = (tf, dims)
-        for t in tf:
-            df[t] += 1
-
-    n = max(1, len(docs))
-    out = {}
-    for d in docs:
-        tf, dims = raw[d["id"]]
+def score_raw(docs, raw, top_n=TOP_N, min_w=MIN_W, settings=None):
+    excluded = quality.stopwords(raw, settings)
+    df = Counter(term for tf, _dims in raw.values() for term in tf if term not in excluded)
+    n, out = max(1, len(docs)), {}
+    for doc in docs:
+        source_tf, dims = raw[doc["id"]]
+        tf = {term: value for term, value in source_tf.items() if term not in excluded}
         if not tf:
-            out[d["id"]] = []
+            out[doc["id"]] = []
             continue
         scored = []
-        for t, f in tf.items():
-            # 只在一篇里出现过的两字词，多半是噪声；三字以上或英文词留着
-            if df[t] < 2 and len(t) <= 2 and not t.isascii():
+        for term, frequency in tf.items():
+            if df[term] < 2 and len(term) <= 2 and not term.isascii():
                 continue
-            idf = math.log((n + 1) / (df[t] + 1)) + 1.0
-            scored.append((t, (1 + math.log(f)) * idf))
+            idf = math.log((n + 1) / (df[term] + 1)) + 1.0
+            scored.append((term, (1 + math.log(frequency)) * idf))
         if not scored:
-            # 按规则筛完什么都不剩时，原样留下。一篇抽不出词条就永远进不了图——
-            # 既搜不到也串不上。宁可留着噪声，也不要一个隐形的想法。
-            scored = [(t, 1.0) for t in tf]
-        norm = math.sqrt(sum(w * w for _, w in scored)) or 1.0
+            scored = [(term, 1.0) for term in tf]
+        norm = math.sqrt(sum(weight * weight for _, weight in scored)) or 1.0
         items = []
-        for t, w in scored:
-            weak = t in GENERIC or (len(t) == 2 and t[0] in NUM_HEAD)
-            wn = (w / norm) * (GENERIC_W if weak else 1.0)
-            if wn < min_w:
-                continue
-            items.append({
-                "term": t, "w": round(wn, 5), "tf": round(tf[t], 3),
-                "df": df[t], "dims": dict(dims[t]),
-            })
-        items.sort(key=lambda x: -x["w"])
-        out[d["id"]] = items[:top_n]
+        for term, weight in scored:
+            weak = term in GENERIC or (len(term) == 2 and term[0] in NUM_HEAD)
+            normalized = weight / norm * (GENERIC_W if weak else 1.0)
+            if normalized >= min_w:
+                items.append({"term":term,"w":round(normalized,5),"tf":round(tf[term],3),"df":df[term],"dims":dict(dims[term])})
+        items.sort(key=lambda item: (-item["w"], item["term"]))
+        out[doc["id"]] = items[:top_n]
     return out
+
+
+def extract(docs, top_n=TOP_N, min_w=MIN_W, entities=None, settings=None):
+    normalizer = quality.Normalizer(settings)
+    normalized = [normalizer.document(doc) for doc in docs]
+    if entities is None:
+        entities = entity.discover(piece["text"] for doc in normalized for piece in doc["pieces"])
+    raw = {doc["id"]: _doc_terms(doc, entities) for doc in normalized}
+    return score_raw(docs, raw, top_n, min_w, settings)

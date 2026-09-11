@@ -15,3 +15,6 @@ node_modules/
 test-results/
 playwright-report/
 deployment-access.txt
+
+dist/
+*.db

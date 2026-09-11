@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+  "title": "Ideas project architecture",
+  "modules": [
+    {
+      "id": "frontend",
+      "path": "web",
+      "responsibility": "Demo/private workspace, local drafts, conflict UI and streamed prompts"
+    },
+    {
+      "id": "backend",
+      "path": "yang",
+      "responsibility": "Auth, revision sync, model proxy, exact lexical graph and opt-in semantic recall"
+    },
+    {
+      "id": "qa",
+      "path": "tests",
+      "responsibility": "Business, security, streaming, sync, crypto and browser acceptance"
+    },
+    {
+      "id": "ops",
+      "path": ".",
+      "responsibility": "Reproducible build, isolated deployment, rollback and evidence"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "workspace",
+      "source": "web/src/09_boot.js"
+    },
+    {
+      "id": "sync-client",
+      "source": "web/src/03_api.js"
+    },
+    {
+      "id": "http",
+      "source": "yang/server.py"
+    },
+    {
+      "id": "auth",
+      "source": "yang/auth.py"
+    },
+    {
+      "id": "sync",
+      "source": "yang/sync.py"
+    },
+    {
+      "id": "store",
+      "source": "yang/store.py"
+    },
+    {
+      "id": "graph",
+      "source": "yang/graph_engine.py"
+    },
+    {
+      "id": "normalizer",
+      "source": "yang/quality.py"
+    },
+    {
+      "id": "semantic",
+      "source": "yang/semantic.py"
+    },
+    {
+      "id": "model",
+      "source": "yang/chat.py"
+    }
+  ],
+  "edges": [
+    {
+      "source": "workspace",
+      "target": "auth",
+      "kind": "login"
+    },
+    {
+      "source": "workspace",
+      "target": "sync-client",
+      "kind": "persist"
+    },
+    {
+      "source": "sync-client",
+      "target": "http",
+      "kind": "HTTP JSON/SSE"
+    },
+    {
+      "source": "http",
+      "target": "auth",
+      "kind": "authorize"
+    },
+    {
+      "source": "http",
+      "target": "sync",
+      "kind": "atomic mutation"
+    },
+    {
+      "source": "sync",
+      "target": "store",
+      "kind": "revision transaction"
+    },
+    {
+      "source": "store",
+      "target": "graph",
+      "kind": "incremental documents"
+    },
+    {
+      "source": "graph",
+      "target": "normalizer",
+      "kind": "alias/evidence"
+    },
+    {
+      "source": "http",
+      "target": "model",
+      "kind": "authenticated SSE"
+    },
+    {
+      "source": "http",
+      "target": "semantic",
+      "kind": "explicit recall"
+    }
+  ],
+  "data_stores": [
+    {
+      "id": "sqlite",
+      "private": true,
+      "location": "/var/lib/ides/yang.db",
+      "entities": [
+        "ideas",
+        "grew",
+        "sparks",
+        "cold",
+        "conf",
+        "revision",
+        "doc_terms",
+        "embeddings_cache"
+      ]
+    },
+    {
+      "id": "demo-browser",
+      "private": false,
+      "namespace": "yang.demo.v2"
+    },
+    {
+      "id": "owner-browser",
+      "private": true,
+      "namespace": "yang.private.v2",
+      "secrets_persisted": false
+    }
+  ],
+  "flows": {
+    "sync": [
+      "capture acknowledged base",
+      "diff current records",
+      "POST base_revision/upsert/delete",
+      "BEGIN IMMEDIATE",
+      "validate revision and complete state",
+      "commit or 409 without writes",
+      "queue edits received during request"
+    ],
+    "graph": [
+      "collect source documents",
+      "normalize aliases",
+      "update changed n-gram statistics",
+      "select entities",
+      "retokenize affected documents",
+      "rescore exact global IDF",
+      "reuse pair topology and update weights",
+      "preserve original evidence"
+    ],
+    "privacy": [
+      "public health is redacted",
+      "session check before private state",
+      "demo data never automatically merges into owner data",
+      "logout clears rendered private views",
+      "unsynced draft remains in private namespace"
+    ]
+  }
+}

@@ -13,6 +13,15 @@
     },
     {
       "statement": "Production auth policy always uses Secure session cookies even if YANG_AUTH_SECURE_COOKIE=0; unsupported Transfer-Encoding and invalid Content-Length/body framing are rejected and the connection is closed."
+    },
+    {
+      "statement": "Revision-based POST /api/sync validates and commits all changes atomically; stale revisions return 409 with no mutation."
+    },
+    {
+      "statement": "GraphCache maintains exact incremental lexical results; aliases preserve source evidence. Optional semantic recall is explicit and disabled by default."
+    },
+    {
+      "statement": "Public health cannot authorize private routes. Model keys are redacted from state and plain exports; encrypted export passwords use POST."
     }
   ],
   "dont_assume": [

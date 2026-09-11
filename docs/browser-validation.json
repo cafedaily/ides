@@ -1,0 +1,19 @@
+{
+  "synthetic_model_fixture": true,
+  "checks": [
+    "public health does not unlock private APIs; demo draft stays local",
+    "login failure recovery, HttpOnly session and demo/private isolation",
+    "idea capture, model shaping, real SSE UI and growth record save",
+    "stream cancellation clears the pending prompt",
+    "fork creates and persists a separate idea",
+    "archive removes live idea and syncs the reason",
+    "edits made during an in-flight save are delivered in the next revision",
+    "stale revisions surface explicit conflict resolution without losing local edits",
+    "offline edits survive and retry after reconnection",
+    "Blob download and validated JSONL import round trip",
+    "desktop, 375px mobile and landscape graph layouts without horizontal overflow",
+    "logout returns to demo namespace and revokes browser session"
+  ],
+  "errors": [],
+  "passed": true
+}

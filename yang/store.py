@@ -1,6 +1,10 @@
 """想法的读写，以及「拆成带维度的片段」——图谱唯一的输入。"""
 import copy
 import time
+import json
+import threading
+from collections import OrderedDict
+from .graph_engine import GraphCache
 
 from . import db as _db
 from .graph import build, path
@@ -84,7 +88,7 @@ def cold(c):
 
 def state(c, include_keys=False):
     conf = _db.kv_get(c, "conf", None)
-    return {"ideas": ideas(c), "sparks": sparks(c), "cold": cold(c),
+    return {"revision": _db.kv_get(c, "revision", 0), "ideas": ideas(c), "sparks": sparks(c), "cold": cold(c),
             "conf": conf if include_keys else redacted_conf(conf)}
 
 
@@ -117,6 +121,8 @@ def put_cold(c, x):
 
 def load_state(c, st, mode="merge"):
     """把一份（已经校验过的）状态放进库。merge 只补不删。"""
+    if mode not in ("merge", "replace"):
+        raise ValueError("mode must be merge or replace")
     if mode == "replace":
         for t in ("grew", "ideas", "sparks", "cold"):
             c.execute("DELETE FROM " + t)
@@ -128,6 +134,7 @@ def load_state(c, st, mode="merge"):
         put_cold(c, x)
     if st.get("conf"):
         _db.kv_set(c, "conf", _merge_conf_keys(c, st["conf"]))
+    _db.kv_set(c, "revision", _db.kv_get(c, "revision", 0) + 1)
     c.commit()
 
 
@@ -155,24 +162,55 @@ def docs(c):
 
 
 # ---------- 图谱 ----------
+_GRAPH_LOCK = threading.RLock()
+_GRAPH_CACHES = OrderedDict()
+
+
+def graph(c, force=False):
+    # Bound caches to four database identities; in-memory connections stay distinct.
+    filename = c.execute("PRAGMA database_list").fetchone()[2]
+    identity = filename or c
+    with _GRAPH_LOCK:
+        cache = _GRAPH_CACHES.pop(identity, None) or GraphCache()
+        _GRAPH_CACHES[identity] = cache
+        while len(_GRAPH_CACHES) > 4:
+            _GRAPH_CACHES.popitem(last=False)
+        owned_transaction = not c.in_transaction
+        if owned_transaction:
+            c.execute("BEGIN")
+        try:
+            documents = docs(c)
+            conf = _db.kv_get(c, "conf", {}) or {}
+        finally:
+            if owned_transaction:
+                c.rollback()
+        return cache.update(documents, conf.get("graph", {}), force=force)
+
+
+def graph_metrics(c):
+    identity = c.execute("PRAGMA database_list").fetchone()[2] or c
+    with _GRAPH_LOCK:
+        cache = _GRAPH_CACHES.get(identity)
+        return dict(cache.metrics) if cache else {}
+
+
 def rebuild(c):
-    d = docs(c)
-    g = build(d)
-    c.execute("DELETE FROM doc_terms")
-    import json as _j
+    g = graph(c)
+    existing = {(row["doc_id"],row["term"]): (row["w"],row["tf"],row["df"],row["dims"])
+                for row in c.execute("SELECT * FROM doc_terms")}
+    wanted = {}
     for did, items in g["terms"].items():
-        for it in items:
-            c.execute("INSERT OR REPLACE INTO doc_terms(doc_id,term,w,tf,df,dims) VALUES(?,?,?,?,?,?)",
-                      (did, it["term"], it["w"], it["tf"], it["df"],
-                       _j.dumps(it["dims"], ensure_ascii=False)))
+        for item in items:
+            wanted[(did,item["term"])] = (item["w"],item["tf"],item["df"],json.dumps(item["dims"],ensure_ascii=False))
+    for key in existing.keys() - wanted.keys():
+        c.execute("DELETE FROM doc_terms WHERE doc_id=? AND term=?", key)
+    for key, value in wanted.items():
+        if existing.get(key) != value:
+            c.execute("INSERT OR REPLACE INTO doc_terms(doc_id,term,w,tf,df,dims) VALUES(?,?,?,?,?,?)", (*key,*value))
     _db.kv_set(c, "graph_at", now_ms())
     c.commit()
     return g
 
 
-def graph(c):
-    return build(docs(c))
-
-
 def connect_two(c, a, b):
-    return path(extract(docs(c)), a, b)
+    return path(graph(c)["terms"], a, b)

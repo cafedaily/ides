@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "title": "Integrate revision sync, private workspace, exact graph and release acceptance",
+  "kind": "feature",
+  "impact": "behavior",
+  "modules": [
+    "backend",
+    "frontend",
+    "qa",
+    "ops"
+  ],
+  "scope": [
+    "yang/**",
+    "web/**",
+    "tests/**",
+    "scripts/**",
+    "docs/**",
+    "deploy/**",
+    "README.md",
+    ".gitignore",
+    "pyproject.toml"
+  ],
+  "acceptance": [
+    "Atomic revision sync preserves edits and rejects conflicts",
+    "Private login and demo isolation with secret-free browser persistence",
+    "Exact incremental graph with configurable aliases and optional embeddings",
+    "Full regression and browser release acceptance evidence"
+  ],
+  "id": "DEV-release-integration",
+  "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+  "state": "done",
+  "created_at": "2026-09-11T12:12:43.020392+00:00",
+  "updated_at": "2026-09-11T12:25:35.847680+00:00",
+  "managed_by": "pi-development-harness",
+  "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+}

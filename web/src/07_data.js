@@ -25,6 +25,7 @@ function kv(host,k,v){ const r=el("div","kv"); r.appendChild(el("span",null,k));
 function fld(host,label,val,ph,on,note,type){
   const w=el("div","fld"); w.appendChild(el("label",null,label));
   const i=document.createElement("input"); i.type=type||"text"; i.value=val==null?"":val;
+  i.id=uid("field-"); w.querySelector("label").htmlFor=i.id;
   if(ph) i.placeholder=ph;
   i.addEventListener("input",()=>on(i.value));
   w.appendChild(i);
@@ -136,12 +137,11 @@ function renderData(){
   });
   row3.appendChild(ab); c3.appendChild(row3);
   c3.appendChild(el("p","note",
-    "说清楚：在这个网页里，只有「Claude」这条路真的连得通——浏览器只允许这个页面连回它自己。"+
-    "你填的自建地址会被完整保存、完整导出，但要等把这一页下载下来自己跑，才连得上。"));
+    API.on ? "模型请求通过私有服务端发送；密钥保存在服务端，浏览器不会持久保存。" : "演示模式使用本地问题。登录后可配置 OpenAI 兼容模型。"));
 
-  const c4=card(r,"谁来问","四个动作可以挂不同的模型。");
+  const c4=card(r,"谁来问","不同动作可以选择不同模型。");
   const MS=(S.conf.models||[]).map(m=>({k:m.id,name:m.name}));
-  [["ask","追问我"],["angle","换个角度"],["collide","碰一下"],["rewrite","按记录重写"]].forEach(([k,n])=>{
+  [["name","起名字"],["ask","追问我"],["angle","换个角度"],["collide","碰一下"],["rewrite","按记录重写"]].forEach(([k,n])=>{
     const w=el("div","fld"); w.appendChild(el("label",null,n));
     pills(w,MS,S.conf.route[k],(v)=>{ S.conf.route[k]=v; save(); renderData(); });
     c4.appendChild(w);
@@ -162,9 +162,11 @@ function renderData(){
   chk(c4,"让它读别的想法","「碰一下」要撞两个想法时才需要。",S.conf.seeOthers,
     (v)=>{ S.conf.seeOthers=v; save(); });
 
+  renderGraphSettings(r);
+
   /* ---- 清空 ---- */
   const c5=el("div","danger2");
-  c5.appendChild(el("p","h","清空这台设备上的全部数据。导出过的文件不受影响。"));
+  c5.appendChild(el("p","h",SPACE==="private" ? "清空私有空间的数据，并同步删除服务端记录。请先导出备份。" : "清空此浏览器的演示数据。导出文件不受影响。"));
   const wf=el("div","fld");
   const wi=document.createElement("input"); wi.type="text"; wi.value=dv.wipe;
   wi.placeholder='想清空就输入「清空」两个字';
@@ -199,7 +201,11 @@ function renderModel(host,m,i){
       (m.base && !/^https?:\/\//i.test(m.base)) ? "地址要以 http:// 或 https:// 开头，不然导出时会被校验拦下。" : null);
     if(m.kind!=="ollama")
       fld(w,"钥匙",m.key,"",(v)=>{ m.key=v; save(); },
-        "只存在这台设备上。不加密导出时不会带走。","password");
+        m.keyConfigured ? "服务端已保存密钥；留空会保留原密钥。" : "仅在当前页面暂存，登录后发送到服务端；不会写入浏览器存储。","password");
+    if(m.keyConfigured){
+      const clear=el("button",null,"清除服务端密钥"); clear.type="button";
+      clear.onclick=()=>{m.clear_key=true; m.key=""; m.keyConfigured=false; save(); renderData();}; w.appendChild(clear);
+    }
     fld(w,"模型名",m.model,"",(v)=>{ m.model=v; save(); });
   }
   if((S.conf.models||[]).length>1){
@@ -219,8 +225,17 @@ function renderModel(host,m,i){
 async function doExport(){
   dv.busy="export"; dv.out=null; renderData();
   try{
-    const r = await YD.exportJSONL({ ideas:S.ideas, sparks:S.sparks, cold:S.cold, conf:S.conf },
-      { pass: dv.enc ? dv.pass : null });
+    let r;
+    if(API.on && SPACE==="private"){
+      await flushSync();
+      if(SYNC.dirty || SYNC.conflict || SYNC.error){
+        r=await YD.exportJSONL(payloadState(S),{pass:dv.enc ? dv.pass : null});
+        dv.note="已导出本机修改；服务端保存的密钥未包含在此离线副本中。";
+      }else{
+        const output=await API._post("/api/export",{pass:dv.enc ? dv.pass : null});
+        r={text:output.text,encrypted:dv.enc,counts:{idea:S.ideas.length,spark:S.sparks.length,cold:S.cold.length}};
+      }
+    }else r=await YD.exportJSONL(payloadState(S),{pass:dv.enc ? dv.pass : null});
     const name = "养想法-"+stamp()+(r.encrypted?"-加密":"")+".jsonl.txt";
     const dl = await dlHandle();
     if(dl){
@@ -234,7 +249,10 @@ async function doExport(){
           msg:"这台设备存不了文件（"+(code||"说不清")+"）。下面是全文，自己复制走。" };
       }
     } else {
-      dv.out={ kind:"text", name:name, text:r.text, msg:"这个页面没法直接给你存文件。下面是全文，复制到一个 .jsonl 里存好。" };
+      const url=URL.createObjectURL(new Blob([r.text],{type:"text/plain;charset=utf-8"}));
+      const link=document.createElement("a"); link.href=url; link.download=name; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      dv.out={kind:"ok",name,size:r.text.length,enc:r.encrypted,counts:r.counts};
     }
   }catch(e){
     dv.out={ kind:"err", msg:"导出失败："+String(e && e.message || e) };
@@ -303,4 +321,34 @@ function renderChk(host){
     go("today");
   });
   row.appendChild(ib); host.appendChild(row);
+}
+
+function renderGraphSettings(host){
+  const settings=S.conf.graph || {};
+  const box=card(host,"图谱词条","默认把 LLM、大语言模型归为大模型，并统一每一步与每步。证据保留原句。");
+  const label=el("label",null,"自定义同义词（每行：别名=标准词）"); label.htmlFor="graph-aliases"; box.appendChild(label);
+  const aliases=el("textarea"); aliases.id="graph-aliases"; aliases.rows=4;
+  aliases.value=Object.entries(settings.aliases||{}).map(([a,b])=>a+"="+b).join("\n"); box.appendChild(aliases);
+  const stopLabel=el("label",null,"忽略词条（每行一个）"); stopLabel.htmlFor="graph-stopwords"; box.appendChild(stopLabel);
+  const stops=el("textarea"); stops.id="graph-stopwords"; stops.rows=3; stops.value=(settings.stopwords||[]).join("\n"); box.appendChild(stops);
+  let adaptive=settings.adaptive!==false;
+  chk(box,"抑制高频功能词","至少 8 篇文档，覆盖率达到 60% 的双字功能词可被抑制。",adaptive,value=>adaptive=value);
+  const message=el("p","note"); message.setAttribute("role","status");
+  const button=el("button",null,"保存图谱设置"); button.onclick=()=>{
+    const mapping={};
+    for(const line of aliases.value.split("\n").filter(x=>x.trim())){
+      const pair=line.split("=").map(x=>x.trim());
+      if(pair.length!==2 || pair.some(x=>x.length<2)){message.textContent="每行用等号分隔，词条至少两个字符。";return;}
+      mapping[pair[0]]=pair[1];
+    }
+    S.conf.graph={aliases:mapping,stopwords:stops.value.split("\n").map(x=>x.trim()).filter(Boolean),adaptive};
+    save(); GV.bridges=null; message.textContent="已保存到本机，登录时会同步并校验。";
+  }; box.appendChild(button); box.appendChild(message);
+  const sem=card(host,"语义召回（可选）","开启后，点击图谱中的语义召回会把文档文本发送给你选择的嵌入服务。默认关闭；不影响词条证据图谱。");
+  const emb=S.conf.embeddings || {enabled:false,model_id:""};
+  chk(sem,"启用嵌入服务","选择支持 /embeddings 的模型，调用可能产生服务商费用。",emb.enabled,value=>{S.conf.embeddings={...emb,enabled:value};save();});
+  const select=el("select"); select.setAttribute("aria-label","嵌入模型");
+  select.appendChild(new Option("选择嵌入模型",""));
+  for(const m of S.conf.models||[]) select.appendChild(new Option(m.name,m.id));
+  select.value=emb.model_id; select.onchange=()=>{S.conf.embeddings={...(S.conf.embeddings||emb),model_id:select.value};save();}; sem.appendChild(select);
 }

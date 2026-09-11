@@ -49,6 +49,15 @@
           },
           {
             "statement": "Production auth policy always uses Secure session cookies even if YANG_AUTH_SECURE_COOKIE=0; unsupported Transfer-Encoding and invalid Content-Length/body framing are rejected and the connection is closed."
+          },
+          {
+            "statement": "Revision-based POST /api/sync validates and commits all changes atomically; stale revisions return 409 with no mutation."
+          },
+          {
+            "statement": "GraphCache maintains exact incremental lexical results; aliases preserve source evidence. Optional semantic recall is explicit and disabled by default."
+          },
+          {
+            "statement": "Public health cannot authorize private routes. Model keys are redacted from state and plain exports; encrypted export passwords use POST."
           }
         ],
         "dont_assume": [
@@ -89,6 +98,15 @@
           },
           {
             "statement": "Existing ask/angle/collide and rewrite UI callbacks update visible prompt/redraft text as streaming deltas arrive; cancelling uses AbortController and does not persist partial generated questions."
+          },
+          {
+            "statement": "Demo and private local storage namespaces are isolated. Private state loads only after session verification; logout clears rendered private content and preserves unsynced drafts."
+          },
+          {
+            "statement": "Captured sync snapshots queue edits during requests and use a baseline/local/remote comparison for explicit conflict resolution."
+          },
+          {
+            "statement": "Streaming truncation is an error. Blob exports, validated imports, editable graph settings and optional semantic recall are available."
           }
         ],
         "dont_assume": [
@@ -133,6 +151,15 @@
           },
           {
             "statement": "Required validation runners passed: project-tests reported 117 passed and 0 failed; web-syntax reported Web source syntax and top-level symbols passed."
+          },
+          {
+            "statement": "128 Python tests passed including encrypted Python/JavaScript interoperability, sync atomicity, graph equivalence, security and upstream SSE."
+          },
+          {
+            "statement": "Browser fixtures use synthetic credentials and a local mock model; actual real-model development is documented separately."
+          },
+          {
+            "statement": "300/500-document store/API benchmark passed below 30% of full recomputation with exact output equality."
           }
         ],
         "dont_assume": [
@@ -178,7 +205,14 @@
       "knowledge": {
         "schema_version": 2,
         "module": "ops",
-        "truths": [],
+        "truths": [
+          {
+            "statement": "Deployment isolates code releases under /opt/ides and persistent data under /var/lib/ides. Root-only production environment provides the token."
+          },
+          {
+            "statement": "Structured architecture, browser evidence and graph benchmark are in docs. Deployment status is tracked separately from development completion."
+          }
+        ],
         "dont_assume": [
           "Module IDs are not source paths.",
           "User data and model credentials live outside this repository."
@@ -223,6 +257,47 @@
         "state": "done",
         "created_at": "2026-09-11T11:37:45.717746+00:00",
         "updated_at": "2026-09-11T11:43:19.292091+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
+    },
+    {
+      "id": "work:DEV-release-integration",
+      "type": "work_item",
+      "label": "Integrate revision sync, private workspace, exact graph and release acceptance",
+      "data": {
+        "schema_version": 2,
+        "title": "Integrate revision sync, private workspace, exact graph and release acceptance",
+        "kind": "feature",
+        "impact": "behavior",
+        "modules": [
+          "backend",
+          "frontend",
+          "qa",
+          "ops"
+        ],
+        "scope": [
+          "yang/**",
+          "web/**",
+          "tests/**",
+          "scripts/**",
+          "docs/**",
+          "deploy/**",
+          "README.md",
+          ".gitignore",
+          "pyproject.toml"
+        ],
+        "acceptance": [
+          "Atomic revision sync preserves edits and rejects conflicts",
+          "Private login and demo isolation with secret-free browser persistence",
+          "Exact incremental graph with configurable aliases and optional embeddings",
+          "Full regression and browser release acceptance evidence"
+        ],
+        "id": "DEV-release-integration",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-11T12:12:43.020392+00:00",
+        "updated_at": "2026-09-11T12:25:35.847680+00:00",
         "managed_by": "pi-development-harness",
         "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
       }
@@ -372,6 +447,30 @@
       "id": "5eeeb29b4090c4512e2f2893a497436d3b10058c40acd5ad10db4f6a3d5c82c1",
       "source": "work:DEV-d87c893d9908",
       "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "69ff145138d4043cb3e5aeef652a18d9107ba9cdd82ba1c2d21793cade158365",
+      "source": "work:DEV-release-integration",
+      "target": "module:backend",
+      "type": "affects"
+    },
+    {
+      "id": "9e9bf471f38e02db290e1ffa5b37ad047c67fe6930684eb3b4a8d23d2ed1c12a",
+      "source": "work:DEV-release-integration",
+      "target": "module:frontend",
+      "type": "affects"
+    },
+    {
+      "id": "0224a895c022b48cd5cb1761dca15b4c6df1591eb199b94af981e4b03ff57d92",
+      "source": "work:DEV-release-integration",
+      "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "d137ddb6d14b4efd5e1e94ec0f8013d109de50b9457c20ad5ad2629c06fad736",
+      "source": "work:DEV-release-integration",
+      "target": "module:ops",
       "type": "affects"
     },
     {

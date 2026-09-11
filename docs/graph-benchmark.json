@@ -1,0 +1,20 @@
+[
+  {
+    "documents": 300,
+    "trials": 3,
+    "full_seconds": 0.5199250000005122,
+    "incremental_seconds": 0.13765710000006948,
+    "ratio": 0.2647633793334305,
+    "exact_match": true,
+    "layer": "SQLite store + API graph dispatch; excludes HTTP serialization"
+  },
+  {
+    "documents": 500,
+    "trials": 3,
+    "full_seconds": 1.2440329999953974,
+    "incremental_seconds": 0.22879269999975804,
+    "ratio": 0.18391208271854886,
+    "exact_match": true,
+    "layer": "SQLite store + API graph dispatch; excludes HTTP serialization"
+  }
+]

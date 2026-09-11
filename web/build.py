@@ -44,7 +44,7 @@ def collisions(parts):
     return bad
 
 
-def main():
+def main(destination=None):
     css = "".join(open(os.path.join(SRC, f), encoding="utf-8").read()
                   for f in CSS if os.path.exists(os.path.join(SRC, f)))
     parts = []
@@ -70,7 +70,8 @@ def main():
            'family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500&display=swap">\n'
            '<style>\n' + css + '\n</style>\n</head>\n<body>\n' + body +
            '\n<script>\n"use strict";\n' + js + '\n</script>\n</body>\n</html>\n')
-    dst = os.path.join(HERE, "index.html")
+    dst = destination or os.path.join(HERE, "index.html")
+    os.makedirs(os.path.dirname(os.path.abspath(dst)), exist_ok=True)
     # newline="\n"：不写就是平台默认，Windows 上会把每个换行变成 CRLF，
     # 同一份 src 在两台机器上拼出来的 index.html 字节数不一样。产物要可复现。
     open(dst, "w", encoding="utf-8", newline="\n").write(out)
@@ -79,4 +80,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--output")
+    sys.exit(main(parser.parse_args().output))

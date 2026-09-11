@@ -3,16 +3,17 @@ import json
 
 from . import chat as _chat
 from . import db as _db
-from . import jsonl, store
+from . import jsonl, store, sync, quality, semantic
 from .graph import path as _path
 from .terms import extract
 
 
 class Err(Exception):
-    def __init__(self, code, msg):
+    def __init__(self, code, msg, details=None):
         super().__init__(msg)
         self.code = code
         self.msg = msg
+        self.details = details or {}
 
 
 def health(c, q, b):
@@ -43,13 +44,21 @@ def put_state(c, q, b):
     mode = (q.get("mode") or ["merge"])[0]
     if mode not in ("merge", "replace"):
         raise Err(400, "mode 只能是 merge 或 replace。")
-    errs = []
-    for r in jsonl.records(b, keep_keys=True):
-        errs += jsonl.check_record(r, 0)
-    if errs:
-        raise Err(422, "；".join(e["msg"] for e in errs[:5]))
+    try:
+        sync.validate_state(b)
+    except (ValueError, TypeError) as exc:
+        raise Err(422, str(exc))
     store.load_state(c, b, mode)
     return {"ok": True, "mode": mode, **private_health(c, q, b)}
+
+
+def sync_state(c, q, b):
+    try:
+        return sync.apply(c,b)
+    except sync.Conflict as exc:
+        raise Err(409,"其他会话已保存修改，请先处理冲突。", {"revision":exc.revision})
+    except (ValueError,TypeError) as exc:
+        raise Err(422,str(exc))
 
 
 def graph(c, q, b):
@@ -84,7 +93,7 @@ def connect(c, q, b):
         raise Err(400, "要两个 id：a 和 b。")
     docs = store.docs(c)
     title = {d["id"]: d["title"] for d in docs}
-    p = _path(extract(docs), a, z)
+    p = _path(store.graph(c)["terms"], a, z)
     if not p:
         return {"found": False,
                 "why": "这两个想法之间没有一条由共同词条连成的路。它们现在真的没关系。"}
@@ -102,7 +111,9 @@ def search(c, q, b):
         raise Err(400, "要一个 q。")
     docs = store.docs(c)
     title = {d["id"]: d["title"] for d in docs}
-    terms = extract(docs)
+    conf = _db.kv_get(c, "conf", {}) or {}
+    s = quality.Normalizer(conf.get("graph", {})).text(s).casefold()
+    terms = store.graph(c)["terms"]
     hits = []
     for did, items in terms.items():
         m = [it for it in items if s in it["term"]]
@@ -115,7 +126,11 @@ def search(c, q, b):
 
 
 def export(c, q, b):
-    pw = (q.get("pass") or [None])[0]
+    if q.get("pass"):
+        raise Err(400,"加密导出口令请通过 POST 请求体提交。")
+    pw = b.get("pass") if isinstance(b,dict) else None
+    if pw is not None and (not isinstance(pw,str) or len(pw)<4):
+        raise Err(422,"加密口令至少 4 个字符。")
     return {"text": jsonl.export(store.state(c, include_keys=bool(pw)), pw or None)}
 
 
@@ -129,7 +144,14 @@ def imp(c, q, b):
     out = {"ok": True, "counts": r["counts"], "warnings": r["warnings"], "applied": False}
     if (q.get("apply") or ["0"])[0] in ("1", "true"):
         mode = (q.get("mode") or ["merge"])[0]
-        store.load_state(c, jsonl.to_state(r["recs"]), mode)
+        if mode not in ("merge","replace"):
+            raise Err(400,"mode 只能是 merge 或 replace。")
+        st = jsonl.to_state(r["recs"])
+        try:
+            sync.validate_state(st)
+        except (ValueError,TypeError) as exc:
+            raise Err(422,str(exc))
+        store.load_state(c, st, mode)
         out["applied"] = True
         out["mode"] = mode
     return out
@@ -140,6 +162,15 @@ def rebuild(c, q, b):
     return {"ok": True, "docs": len(g["terms"]),
             "terms": sum(len(v) for v in g["terms"].values()),
             "bridges": len(g["bridges"]), "sim": len(g["sim"])}
+
+
+def semantic_related(c,q,b):
+    if not isinstance(b,dict) or not isinstance(b.get("id"),str):
+        raise Err(422,"请指定想法 id。")
+    try:
+        return semantic.related(c,b["id"])
+    except ValueError as exc:
+        raise Err(422,str(exc))
 
 
 def do_chat(c, q, b):
@@ -161,6 +192,9 @@ ROUTES = {
     ("GET", "/api/session"): session,
     ("GET", "/api/state"): get_state,
     ("POST", "/api/state"): put_state,
+    ("POST", "/api/sync"): sync_state,
+    ("POST", "/api/semantic"): semantic_related,
+    ("POST", "/api/export"): export,
     ("GET", "/api/graph"): graph,
     ("GET", "/api/bridges"): bridges,
     ("GET", "/api/related"): related,

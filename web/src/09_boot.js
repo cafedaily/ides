@@ -86,7 +86,7 @@ function finishChill(it,ta){
 function foot(){
   const f=el("div","foot");
   f.appendChild(document.createTextNode(
-    API.on ? "本机的库里有一份，浏览器里也有一份。" : "存在你这台设备的浏览器里，不上传。"));
+    SPACE==="private" ? "私有空间。修改先保存在浏览器，再同步到服务端。" : "演示内容存在当前浏览器，不上传。"));
   f.appendChild(document.createElement("br"));
   const b=el("button",null,"导出、导入、模型 →"); b.type="button";
   b.addEventListener("click",()=>go("data"));
@@ -107,41 +107,89 @@ function foot(){
 })();
 document.getElementById("fab").addEventListener("click",()=>go("new"));
 
-(async function boot(){
-  let seedOnly = false;          // 这一次打开是不是只有演示种子——它不该被推给后端
-  const fromDb = await dbBoot();
-  if(FRESH){
-    if(fromDb && (fromDb.ideas.length || fromDb.cold.length || fromDb.sparks.length)){
-      S.ideas=fromDb.ideas; S.cold=fromDb.cold; S.sparks=fromDb.sparks||[];
-      S.conf=fromDb.conf||defaultConf();
-    } else { S = seedState(); seedOnly = true; }
-    save();
-  } else if(DB.ok) dbWrite();
-  if(VIEWS.indexOf(S.v)<0 || (S.v==="one" && !cur())) S.v="today";
-  if(S.v==="new"||S.v==="why") S.v="today";
-  go(S.v);
-
-  /* 后端是可选的。探测失败就当它不存在，整个应用照常跑。
-     先拉后端的（本机那份库是权威），拉不到就用本地的，然后把本地的推上去。 */
-  if(await API.probe()){
-    try{
-      const st = await API.pull();
-      const local = (S.ideas.length + S.sparks.length + S.cold.length);
-      const remote = ((st.ideas||[]).length + (st.sparks||[]).length + (st.cold||[]).length);
-      if(remote){
-        /* 本机那份库是权威。这边只有演示种子的话，直接换成后端的——
-           别把示例数据混进他真正的想法里。 */
-        const mode = seedOnly ? "replace" : "merge";
-        const out = YD.apply({ideas:S.ideas, sparks:S.sparks, cold:S.cold, conf:S.conf},
-          YD.records({ideas:st.ideas||[], sparks:st.sparks||[], cold:st.cold||[], conf:null}),
-          mode);
-        S.ideas=out.ideas; S.sparks=out.sparks||[]; S.cold=out.cold;
-        if(st.conf) S.conf = Object.assign(defaultConf(), st.conf);
-        save();
-        if(seedOnly) return render();          // 两边一样，不用再推回去
+let workspaceEpoch=0;
+function paintSession(){
+  const host=document.getElementById("session-status"); if(!host) return;
+  host.textContent="";
+  const text=SPACE==="private" ? (SYNC.error || (SYNC.conflict ? "发现同步冲突，本机修改已保留" : SYNC.dirty || SYNC.running ? "正在保存修改" : "已登录 · 已保存")) : "本地演示 · 登录后进入自己的空间";
+  host.appendChild(el("span",null,text));
+  if(SPACE==="private"){
+    const retry=el("button",null,"重试同步"); retry.onclick=()=>{SYNC.error="";syncUp();};
+    if(SYNC.error) host.appendChild(retry);
+    const out=el("button",null,"退出登录"); out.onclick=async()=>{
+      await flushSync();
+      try{ await API._post("/api/logout",{}); API.on=false; await enterDemo(); }
+      catch(e){ SYNC.error="退出失败，请重试："+e.message; paintSession(); }
+    }; host.appendChild(out);
+    if(SYNC.conflict){
+      host.appendChild(el("span",null,"冲突项："+SYNC.conflict.conflicts.join("、")));
+      for(const [choice,label] of [["local","冲突项保留本机版本"],["remote","冲突项保留服务端版本"]]){
+        const b=el("button",null,label); b.onclick=()=>resolveSync(choice); host.appendChild(b);
       }
-      if(local && !seedOnly) syncUp();
-      render();
-    }catch(e){ API.why = String(e && e.message || e); }
+    }
+  }else{
+    const login=el("button",null,"登录自己的空间"); login.onclick=showLogin; host.appendChild(login);
   }
+}
+function showLogin(){
+  const old=document.getElementById("login-dialog"); if(old) old.remove();
+  const dialog=el("dialog","login-dialog"); dialog.id="login-dialog";
+  const form=document.createElement("form");
+  const title=el("h2",null,"登录自己的空间"); title.id="login-title";
+  dialog.setAttribute("aria-labelledby",title.id); form.appendChild(title);
+  form.appendChild(el("p",null,"演示数据留在当前浏览器，不会合入你的私有空间。"));
+  const label=el("label",null,"访问口令"); label.htmlFor="login-token"; form.appendChild(label);
+  const input=document.createElement("input"); input.id="login-token"; input.type="password"; input.autocomplete="current-password"; input.required=true; form.appendChild(input);
+  const error=el("p","note"); error.setAttribute("role","alert"); form.appendChild(error);
+  const submit=el("button","main","登录"); submit.type="submit"; form.appendChild(submit);
+  const cancel=el("button",null,"继续演示"); cancel.type="button"; cancel.onclick=()=>dialog.close(); form.appendChild(cancel);
+  form.onsubmit=async event=>{
+    event.preventDefault(); submit.disabled=true; error.textContent="正在登录…";
+    try{ await API._post("/api/login",{token:input.value}); input.value=""; API.tried=false;
+      if(!await API.probe(true)) throw new Error(API.why);
+      await enterPrivate(); dialog.close();
+    }catch(e){ error.textContent=e.message; }finally{ submit.disabled=false; }
+  };
+  dialog.appendChild(form); document.body.appendChild(dialog); dialog.showModal(); input.focus();
+}
+async function chooseSpace(name){
+  workspaceEpoch++;
+  clearTimeout(wTimer); clearTimeout(pushT);
+  stopLive(); AI=null; live=null; forks=null; redraft=null; S.cur=null; GV.bridges=null; GV.path=null;
+  if(DB.h) DB.h.close(); DB.ok=false;
+  for(const view of document.querySelectorAll(".view")) view.textContent="";
+  patt={loading:false,text:"",err:""}; pair={loading:false,r:null,err:""}; chilling={loading:false,push:"",asked:false};
+  SPACE=name; LS="yang."+name+".v2"; DB.name=LS;
+  const cached=load();
+  S=cached || (name==="demo" ? seedState() : {ideas:[],sparks:[],cold:[],conf:defaultConf(),v:"today",tab:"live",cur:null,today:null});
+  const disk=await dbBoot();
+  if(!cached && disk && (disk.ideas.length || disk.sparks.length || disk.cold.length)) Object.assign(S,disk);
+  S.conf=Object.assign(defaultConf(),S.conf||{});
+  S.v="today"; S.cur=null;
+}
+async function enterDemo(){
+  if(SPACE==="private"){
+    try{ S.syncBase=SYNC.base; localStorage.setItem(LS,JSON.stringify(safeState(S))); }catch(e){}
+    await dbWrite();
+  }
+  SYNC.base=null; SYNC.conflict=null; SYNC.dirty=false;
+  await chooseSpace("demo"); save(); go("today"); paintSession();
+}
+async function enterPrivate(){
+  const remote=await API.pull();
+  await chooseSpace("private");
+  if(S.syncBase){
+    const merged=mergeThree(S.syncBase,payloadState(S),remote);
+    if(merged.conflicts.length){ SYNC.base=S.syncBase; SYNC.conflict={remote,conflicts:merged.conflicts}; }
+    else{ Object.assign(S,merged.state); SYNC.base=remote; SYNC.conflict=null; }
+  }else{ Object.assign(S,remote); SYNC.base=remote; SYNC.conflict=null; }
+  SYNC.error=""; save(); await _initAI(); go("today"); paintSession(); await flushSync();
+}
+(async function boot(){
+  const host=el("div","session-status"); host.id="session-status"; host.setAttribute("aria-live","polite");
+  document.querySelector("header").appendChild(host);
+  try{
+    if(await API.probe()) await enterPrivate();
+    else await enterDemo();
+  }catch(e){ API.why=e.message; await enterDemo(); }
 })();

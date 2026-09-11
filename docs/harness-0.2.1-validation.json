@@ -12,44 +12,99 @@
     "core_python_passed": 31,
     "core_node_passed": 7
   },
-  "real_development": {
-    "real_model_call": true,
-    "model": "gpt-5.5",
-    "provider": "operator-configured OpenAI-compatible endpoint",
-    "task_id": "DEV-ab6fdbe44d9e",
-    "completed": true,
-    "turns": 44,
-    "tool_calls": 48,
-    "cost_measured": false,
-    "children": [
-      {
-        "id": "d03083ba712442ed8b761a4821d9a341",
-        "status": "accepted",
-        "agent": "worker",
-        "usage": {
-          "turns": 12,
-          "tool_calls": 18,
-          "input_tokens": 115284,
-          "output_tokens": 3988,
-          "cost": null,
-          "model": {
-            "provider": "ideas-configured",
-            "id": "gpt-5.5"
-          },
-          "activity": "subagent_report",
-          "duration_ms": 48447
-        }
-      }
-    ]
-  },
   "remaining": [
-    "authentication and credential protection",
-    "SSE streaming",
-    "synonym and semantic recall",
-    "incremental graph benchmark",
-    "incremental synchronization",
-    "browser acceptance",
     "ten HTTPS deployment",
-    "public ides repository and harness case study"
-  ]
+    "public ides repository and harness case link"
+  ],
+  "real_development_runs": [
+    {
+      "real_model_call": true,
+      "model": "gpt-5.5",
+      "provider": "operator-configured OpenAI-compatible endpoint",
+      "task_id": "DEV-ab6fdbe44d9e",
+      "completed": true,
+      "turns": 44,
+      "tool_calls": 48,
+      "cost_measured": false,
+      "children": [
+        {
+          "id": "d03083ba712442ed8b761a4821d9a341",
+          "status": "accepted",
+          "agent": "worker",
+          "usage": {
+            "turns": 12,
+            "tool_calls": 18,
+            "input_tokens": 115284,
+            "output_tokens": 3988,
+            "cost": null,
+            "model": {
+              "provider": "ideas-configured",
+              "id": "gpt-5.5"
+            },
+            "activity": "subagent_report",
+            "duration_ms": 48447
+          }
+        }
+      ]
+    },
+    {
+      "real_model_call": true,
+      "model": "gpt-5.5",
+      "provider": "operator-configured OpenAI-compatible endpoint",
+      "task_id": "DEV-d87c893d9908",
+      "completed": true,
+      "turns": 35,
+      "tool_calls": 42,
+      "cost_measured": false,
+      "children": [
+        {
+          "id": "d03083ba712442ed8b761a4821d9a341",
+          "status": "accepted",
+          "agent": null
+        },
+        {
+          "id": "f5d7472d9bb745bdaf5bee0a8ca8d4db",
+          "status": "accepted",
+          "agent": null
+        }
+      ]
+    },
+    {
+      "real_model_call": true,
+      "model": "gpt-5.5",
+      "provider": "operator-configured OpenAI-compatible endpoint",
+      "task_id": "DEV-4e0ca6f5e5ca",
+      "completed": true,
+      "turns": 41,
+      "tool_calls": 47,
+      "cost_measured": false,
+      "children": [
+        {
+          "id": "d03083ba712442ed8b761a4821d9a341",
+          "status": "accepted",
+          "agent": null
+        },
+        {
+          "id": "f5d7472d9bb745bdaf5bee0a8ca8d4db",
+          "status": "accepted",
+          "agent": null
+        },
+        {
+          "id": "a2343908fec54845aa318b68835be146",
+          "status": "discarded",
+          "agent": null
+        }
+      ]
+    }
+  ],
+  "integration": {
+    "executor": "Codex primary agent using installed 0.2.1 Harness controlled writes",
+    "task": "DEV-release-integration",
+    "published_runtime_modified": false,
+    "regression_passed": 128,
+    "browser_evidence": "browser-validation.json",
+    "graph_evidence": "graph-benchmark.json",
+    "crypto": "Python and JavaScript AES-GCM encrypted export in both directions"
+  },
+  "commit_adapter_correction": "Published 0.2.1 development runtime unchanged. Commit hook uses the separately fixed core source to allow staged review of completed tasks; runtime write checks remain strict."
 }

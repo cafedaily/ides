@@ -145,6 +145,12 @@ def discover(texts, min_count=MIN_COUNT, min_len=MIN_LEN,
         return set()
 
     cnt, left = _counts(runs, max_len)
+    return discover_counts(cnt, left, min_count, min_len, min_cohesion)
+
+
+def discover_counts(cnt, left, min_count=MIN_COUNT, min_len=MIN_LEN,
+                    min_cohesion=MIN_COHESION):
+    """Select entities from sufficient statistics, shared by full and incremental paths."""
     keep = {}
     # 从长到短：长的先定下来，短的如果只是它的一段，后面会被剔掉
     for g, c in sorted(cnt.items(), key=lambda kv: (-len(kv[0]), -kv[1])):

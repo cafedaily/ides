@@ -37,7 +37,7 @@ function seedState(){
     conf: defaultConf(), v:"today", tab:"live", cur:null, today:null
   };
 }
-const LS = "yang.v1";
+let SPACE = "demo", LS = "yang.demo.v2";
 function load(){ try{ const s=localStorage.getItem(LS); return s?JSON.parse(s):null; }catch(e){ return null; } }
 let S = load();
 let FRESH = !S;

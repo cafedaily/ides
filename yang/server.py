@@ -1,5 +1,6 @@
 """标准库 HTTP 服务。默认只听 127.0.0.1。"""
 import json
+import ipaddress
 import mimetypes
 import os
 import posixpath
@@ -16,7 +17,15 @@ _LOGIN_THROTTLE = auth.FailureThrottle(limit=5, window_seconds=60, max_keys=2048
 
 
 def _peer_key(handler):
-    return handler.client_address[0] if handler.client_address else "unknown"
+    peer = handler.client_address[0] if handler.client_address else "unknown"
+    if os.environ.get("YANG_TRUST_PROXY") == "loopback":
+        try:
+            if ipaddress.ip_address(peer).is_loopback:
+                supplied=handler.headers.get("X-Real-IP", "")
+                return str(ipaddress.ip_address(supplied))
+        except ValueError:
+            pass
+    return peer
 
 
 def _safe_policy(host="127.0.0.1", unsafe_no_auth=False):
@@ -32,10 +41,24 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
     auth_policy = policy or _safe_policy(host, unsafe_no_auth=unsafe_no_auth)
     require_auth = auth_policy.has_token or auth_policy.production
     web_root_path = Path(webroot).resolve()
+    login_throttle = auth.FailureThrottle(limit=5, window_seconds=60, max_keys=2048)
 
     class H(BaseHTTPRequestHandler):
         server_version = "yang"
         protocol_version = "HTTP/1.1"
+
+        def end_headers(self):
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Permissions-Policy", "camera=(), geolocation=()")
+            super().end_headers()
+
+        def handle(self):
+            try:
+                super().handle()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                self.close_connection = True
 
         def setup(self):
             super().setup()
@@ -61,7 +84,7 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
             self.close_connection = True
             raise api.Err(code, msg)
 
-        def _read_json_body(self):
+        def _read_json_body(self, limit=MAX_BODY):
             te = (self.headers.get("Transfer-Encoding") or "").strip()
             if te:
                 self._framing_error(400, "不支持 Transfer-Encoding。")
@@ -75,7 +98,7 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
                 self._framing_error(400, "Content-Length 不对。")
             if n < 0:
                 self._framing_error(400, "Content-Length 不对。")
-            if n > MAX_BODY:
+            if n > limit:
                 self._framing_error(413, "请求体太大。")
             raw = self.rfile.read(n) if n else b""
             if len(raw) != n:
@@ -106,17 +129,17 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
         def _login(self, query, body):
             if query:
                 return self._json(400, {"error": "登录口令只能放在 JSON 请求体里。"})
-            retry = _LOGIN_THROTTLE.retry_after(_peer_key(self))
+            retry = login_throttle.retry_after(_peer_key(self))
             if retry > 0:
                 return self._json(429, {"error": "尝试太频繁，请稍后再试。"}, {"Retry-After": str(retry)})
             if not isinstance(body, dict) or set(body) - {"token"} or not isinstance(body.get("token"), str):
-                _LOGIN_THROTTLE.record_failure(_peer_key(self))
+                login_throttle.record_failure(_peer_key(self))
                 return self._json(401, {"error": "认证失败。"})
             if not auth_policy.validate_token(body.get("token")):
-                retry = _LOGIN_THROTTLE.record_failure(_peer_key(self))
+                retry = login_throttle.record_failure(_peer_key(self))
                 headers = {"Retry-After": str(retry)} if retry > 0 else None
                 return self._json(401, {"error": "认证失败。"}, headers)
-            _LOGIN_THROTTLE.reset(_peer_key(self))
+            login_throttle.reset(_peer_key(self))
             return self._json(200, {"ok": True, "authenticated": True},
                               {"Set-Cookie": auth_policy.make_session_cookie()})
 
@@ -143,7 +166,11 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
                 ok, events = chat.stream_events(c, body)
                 if not ok:
                     return self._json(400, {"error": events})
-                self._send_sse(events)
+                try:
+                    self._send_sse(events)
+                finally:
+                    if hasattr(events,"close"):
+                        events.close()
             finally:
                 c.close()
 
@@ -152,8 +179,12 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
             q = urllib.parse.parse_qs(u.query, keep_blank_values=True)
             body = None
             try:
+                route_key = (method, u.path)
+                if route_key not in api.PUBLIC_ROUTES and u.path not in ("/api/login", "/api/logout") and not self._authenticated():
+                    self.close_connection = True
+                    return self._json(401, {"error": "需要认证。"})
                 if method == "POST":
-                    body = self._read_json_body()
+                    body = self._read_json_body(limit=4096 if u.path in ("/api/login", "/api/logout") else MAX_BODY)
                 if (method, u.path) == ("POST", "/api/login"):
                     if not auth_policy.has_token:
                         return self._json(503, {"error": "认证未配置。"})
@@ -180,8 +211,10 @@ def make(dbpath, webroot, policy=None, host="127.0.0.1", unsafe_no_auth=False):
                     self._json(200, out)
                 finally:
                     c.close()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                self.close_connection = True
             except api.Err as e:
-                self._json(e.code, {"error": e.msg})
+                self._json(e.code, {"error": e.msg, **e.details})
             except Exception:
                 traceback.print_exc()
                 self._json(500, {"error": "服务端出错了。"})

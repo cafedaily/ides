@@ -13,6 +13,15 @@
     },
     {
       "statement": "Required validation runners passed: project-tests reported 117 passed and 0 failed; web-syntax reported Web source syntax and top-level symbols passed."
+    },
+    {
+      "statement": "128 Python tests passed including encrypted Python/JavaScript interoperability, sync atomicity, graph equivalence, security and upstream SSE."
+    },
+    {
+      "statement": "Browser fixtures use synthetic credentials and a local mock model; actual real-model development is documented separately."
+    },
+    {
+      "statement": "300/500-document store/API benchmark passed below 30% of full recomputation with exact output equality."
     }
   ],
   "dont_assume": [

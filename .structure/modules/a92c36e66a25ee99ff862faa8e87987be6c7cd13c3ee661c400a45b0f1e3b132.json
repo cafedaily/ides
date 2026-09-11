@@ -1,7 +1,14 @@
 {
   "schema_version": 2,
   "module": "ops",
-  "truths": [],
+  "truths": [
+    {
+      "statement": "Deployment isolates code releases under /opt/ides and persistent data under /var/lib/ides. Root-only production environment provides the token."
+    },
+    {
+      "statement": "Structured architecture, browser evidence and graph benchmark are in docs. Deployment status is tracked separately from development completion."
+    }
+  ],
   "dont_assume": [
     "Module IDs are not source paths.",
     "User data and model credentials live outside this repository."

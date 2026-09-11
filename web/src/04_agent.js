@@ -32,7 +32,6 @@ async function _initAI(){
     render();
   }
 }
-_initAI();
 
 function stopLive(){ if(liveAbort){ try{ liveAbort.abort(); }catch(e){} liveAbort=null; } }
 function tone(){
@@ -55,11 +54,17 @@ function actionFromPrompt(input){
   return null;
 }
 async function say(input, o){
+  const epoch=workspaceEpoch;
   o = o || {};
   if(!AI) return null;
   const action = o.action || actionFromPrompt(input);
-  if(o.json) return await AI.json(input, { modelTier:o.tier||"default", action:action, signal:o.signal, cache:o.cache!==false });
+  if(o.json){
+    const value=await AI.json(input,{modelTier:o.tier||"default",action,signal:o.signal,cache:o.cache!==false});
+    if(epoch!==workspaceEpoch) throw new Error("空间已切换");
+    return value;
+  }
   const r = await AI(input, { modelTier:o.tier||"quick", action:action, signal:o.signal, onText:o.onText, cache:false });
+  if(epoch!==workspaceEpoch) throw new Error("空间已切换");
   return String(r && r.text || "").trim().replace(/^[「『"']+|[」』"']+$/g,"").trim();
 }
 function ideaCtx(it){

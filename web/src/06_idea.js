@@ -111,7 +111,7 @@ async function draw(kind,it){
   const input = "你在帮一个人养一个还没成形的想法。下面是它现在的样子。\n\n"+ideaCtx(it)+
     "\n\n你要做的："+task+"\n\n"+tone()+NOSLOP;
   try{
-    const t=await say(input,{ tier:"quick", signal:ac.signal, onText:({text})=>{
+    const t=await say(input,{ action:kind, tier:"quick", signal:ac.signal, onText:({text})=>{
       if(liveAbort!==ac || !live || !live.loading) return;
       live.q=text;
       const q=document.querySelector(".prompt .q");
@@ -163,10 +163,12 @@ function promptBox(it){
 
 /* 分叉 */
 async function doFork(it){
+  const epoch=workspaceEpoch;
   stopLive(); live=null; redraft=null;
   forks={ loading:true, dirs:null }; vOne();
   let d=null;
   try{ d=await agFork(it); }catch(e){}
+  if(epoch!==workspaceEpoch) return;
   forks={ loading:false, dirs:d };
   if(S.v==="one") vOne();
 }
@@ -209,6 +211,7 @@ function forkBox(it){
 
 /* 按记录重写 */
 async function rewrite(it){
+  const epoch=workspaceEpoch;
   stopLive(); live=null; forks=null;
   redraft={loading:true,text:""}; vOne();
   const ac=new AbortController(); liveAbort=ac;

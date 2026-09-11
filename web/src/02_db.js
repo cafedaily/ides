@@ -1,5 +1,5 @@
 /* ===== 本地库：IndexedDB 是长住的地方，localStorage 只是一份能秒开的镜像 ===== */
-const DB = { name:"yang", ver:2, h:null, ok:false, why:"还没连上" };
+const DB = { name:"yang.demo.v2", ver:2, h:null, ok:false, why:"还没连上" };
 function idbReq(r){ return new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 function idbOpen(){
   return new Promise((res,rej)=>{
@@ -35,13 +35,23 @@ function dbWrite(){
     S.ideas.forEach(i=>a.put(JSON.parse(JSON.stringify(i))));
     (S.sparks||[]).forEach(x=>sp.put(JSON.parse(JSON.stringify(x))));
     S.cold.forEach(c=>b.put(JSON.parse(JSON.stringify(c))));
-    k.put({k:"conf", v:JSON.parse(JSON.stringify(S.conf||defaultConf()))});
+    k.put({k:"conf", v:safeState(S).conf});
     k.put({k:"meta", v:{ ver:YD.V, at:Date.now() }});
   });
 }
 let wTimer=null;
+function safeState(value){
+  const out=JSON.parse(JSON.stringify(value));
+  if(out.conf) for(const m of out.conf.models||[]){
+    m.keyConfigured=!!(m.key || m.keyConfigured);
+    delete m.key;
+  }
+  if(out.syncBase) out.syncBase=safeState(out.syncBase);
+  return out;
+}
 function save(){
-  try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){}
+  if(SPACE==="private" && typeof SYNC!=="undefined" && SYNC.base) S.syncBase=safeState(SYNC.base);
+  try{ localStorage.setItem(LS, JSON.stringify(safeState(S))); }catch(e){}
   if(typeof syncUp === "function") syncUp();
   if(DB.ok){ clearTimeout(wTimer); wTimer=setTimeout(dbWrite, 250); }
 }
