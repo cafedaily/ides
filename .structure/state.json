@@ -1,11 +1,10 @@
 {
-  "project": "yang-xiangfa",
-  "phase": "PHASE_4_IMPLEMENTATION",
-  "phase_entered_at": "2026-09-11T00:00:00+08:00",
-  "last_gate": "G0-bootstrap",
-  "last_gate_decision": "APPROVED",
-  "phase_owner": "hybrid",
-  "version": "1.1",
-  "bootstrap": true,
-  "bootstrap_reason": "existing project retrofitted with .structure/ v1.1"
+  "schema_version": 2,
+  "project": "yang",
+  "package_version": "2.0.0-preview.2",
+  "lifecycle_status": "ready",
+  "operating_mode": "bootstrap",
+  "phase": "PHASE_0_EMPTY",
+  "updated_at": "2026-09-11T11:17:52.045757+00:00",
+  "discovery_status": "draft"
 }

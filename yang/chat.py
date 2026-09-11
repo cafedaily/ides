@@ -14,16 +14,34 @@ import urllib.error
 from . import db as _db
 
 
-def _model(c):
+def _model(c, action=None):
     conf = _db.kv_get(c, "conf", {})
     models = conf.get("models") if isinstance(conf, dict) else None
     if not models:
-        return None
-    return models[0]
+        return None, None
+
+    if not action or not isinstance(conf, dict):
+        return models[0], None
+
+    route = conf.get("route")
+    if not isinstance(route, dict) or action not in route:
+        return models[0], None
+
+    mid = route.get(action)
+    if not mid:
+        return models[0], None
+
+    for m in models:
+        if isinstance(m, dict) and m.get("id") == mid:
+            return m, None
+
+    return None, "动作 %s 配的模型 ID %s 不存在。请在「数据」页重新选择模型。" % (action, mid)
 
 
 def complete(c, body):
-    m = _model(c)
+    m, err = _model(c, body.get("action"))
+    if err:
+        return {"ok": False, "error": err}
     if not m:
         return {"ok": False, "error": "没有配模型。在「数据」页加一个。"}
 

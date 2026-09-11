@@ -1,0 +1,446 @@
+{
+  "schema_version": 2,
+  "graph_kind": "project-instance",
+  "nodes": [
+    {
+      "id": "project",
+      "type": "project",
+      "label": "yang",
+      "data": {
+        "schema_version": 2,
+        "project": "yang",
+        "package_version": "2.0.0-preview.2",
+        "lifecycle_status": "ready",
+        "operating_mode": "bootstrap",
+        "phase": "PHASE_0_EMPTY",
+        "updated_at": "2026-09-11T11:17:52.045757+00:00",
+        "discovery_status": "draft"
+      }
+    },
+    {
+      "id": "module:backend",
+      "type": "module",
+      "label": "backend",
+      "data": {
+        "id": "backend",
+        "path": "yang",
+        "responsibility": "Text, entities, graph, persistence, HTTP API and model proxy",
+        "owns": [
+          "yang/**"
+        ],
+        "may_touch": [],
+        "forbidden": [],
+        "depends_on": [],
+        "tests_for": [],
+        "health": "unverified"
+      },
+      "knowledge": {
+        "schema_version": 2,
+        "module": "backend",
+        "truths": [
+          {
+            "statement": "/api/chat backend model selection reads conf.models and optional conf.route[action]."
+          },
+          {
+            "statement": "When body.action maps to a configured model id, yang/chat.py sends the OpenAI-compatible request to that model's base URL and model name."
+          },
+          {
+            "statement": "Missing action, missing route, empty route value, or an unrouted action remains compatible by selecting the first configured model."
+          },
+          {
+            "statement": "If conf.route[action] names a model id not present in conf.models, complete returns ok:false with an error naming the action and missing id before any outbound request."
+          }
+        ],
+        "dont_assume": [
+          "Model API keys must not be printed or exposed to the frontend.",
+          "Configured model routes are validated at request time, not during data-entry rendering."
+        ]
+      },
+      "source": ".structure/modules/10e08a419e850eba1ebba18fdd28eb7ec1b7e8baa9bcc3b973e2b8891ec726be.json"
+    },
+    {
+      "id": "module:frontend",
+      "type": "module",
+      "label": "frontend",
+      "data": {
+        "id": "frontend",
+        "path": "web",
+        "responsibility": "Accessible idea workspace, offline storage, streaming and synchronization",
+        "owns": [
+          "web/**"
+        ],
+        "may_touch": [],
+        "forbidden": [],
+        "depends_on": [
+          "backend"
+        ],
+        "tests_for": [],
+        "health": "unverified"
+      },
+      "knowledge": {
+        "schema_version": 2,
+        "module": "frontend",
+        "truths": [
+          {
+            "statement": "The browser AI wrapper posts body.action to /api/chat whenever the call options include action."
+          },
+          {
+            "statement": "say() forwards explicit action options to AI/AI.json, including agShape action ask and agName action name."
+          },
+          {
+            "statement": "actionFromPrompt preserves existing ask, angle, collide and rewrite routing by deriving those action keys from current prompt text when callers do not pass an explicit action."
+          }
+        ],
+        "dont_assume": [
+          "Frontend action routing exposes no model API keys; keys stay in backend model configuration.",
+          "The local Claude extension path may bypass /api/chat because action forwarding only applies to the API-backed AI wrapper."
+        ]
+      },
+      "source": ".structure/modules/1cf387c012cd2d02f1923e589f86df4a4802427057dbc90f47b87f04d29d54bc.json"
+    },
+    {
+      "id": "module:qa",
+      "type": "module",
+      "label": "qa",
+      "data": {
+        "id": "qa",
+        "path": "tests",
+        "responsibility": "Business, protocol and integration regression coverage",
+        "owns": [
+          "tests/**"
+        ],
+        "may_touch": [],
+        "forbidden": [],
+        "depends_on": [],
+        "tests_for": [
+          "backend",
+          "frontend"
+        ],
+        "health": "unverified"
+      },
+      "knowledge": {
+        "schema_version": 2,
+        "module": "qa",
+        "truths": [
+          {
+            "statement": "tests/test_chat.py covers default first-model selection with no action or route."
+          },
+          {
+            "statement": "tests/test_chat.py covers ask and name actions routing to distinct configured model IDs using a monkeypatched urlopen rather than network."
+          },
+          {
+            "statement": "tests/test_chat.py covers existing ask, angle, collide and rewrite route keys."
+          },
+          {
+            "statement": "tests/test_chat.py verifies invalid configured model IDs return a clear error and do not make an outbound request."
+          },
+          {
+            "statement": "development_check project-tests passed with 99 passing tests, including 5 chat routing tests; development_check web-syntax passed."
+          }
+        ],
+        "dont_assume": [
+          "Subagent-reported validation is not evidence unless parent invokes development_check.",
+          "Chat routing tests do not contact real model services or expose credentials."
+        ]
+      },
+      "source": ".structure/modules/3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392.json"
+    },
+    {
+      "id": "module:ops",
+      "type": "module",
+      "label": "ops",
+      "data": {
+        "id": "ops",
+        "path": ".",
+        "responsibility": "Build, documentation, deployment and release evidence",
+        "owns": [
+          "README.md",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "Makefile",
+          "pyproject.toml",
+          ".gitignore",
+          ".gitattributes",
+          ".github/**",
+          ".cursor/**",
+          ".clinerules/**",
+          "docs/**",
+          "scripts/**",
+          "deploy/**",
+          "package.json",
+          "package-lock.json",
+          "playwright.config.*",
+          ".env.example"
+        ],
+        "may_touch": [],
+        "forbidden": [],
+        "depends_on": [],
+        "tests_for": [],
+        "health": "unverified"
+      },
+      "knowledge": {
+        "schema_version": 2,
+        "module": "ops",
+        "truths": [],
+        "dont_assume": [
+          "Module IDs are not source paths.",
+          "User data and model credentials live outside this repository."
+        ],
+        "notes": "Fresh state for the user-authorized 0.2.1 development and deployment goal."
+      },
+      "source": ".structure/modules/a92c36e66a25ee99ff862faa8e87987be6c7cd13c3ee661c400a45b0f1e3b132.json"
+    },
+    {
+      "id": "work:DEV-ab6fdbe44d9e",
+      "type": "work_item",
+      "label": "# Real Agent development assignment: T-002\n\nUse the installed Pi Development Harness tools to implement action-based model routing in this project. The user authorized this work and publication later; this task only changes and validates source.\n\nPlan the current task with modules `backend`, `frontend`, `qa`; scope `yang/chat.py`, `web/src/04_agent.js`, `tests/test_chat.py`; kind bugfix; impact behavior. Acceptance criteria: two configured models can route ask and name to different IDs; invalid configured m",
+      "data": {
+        "schema_version": 2,
+        "title": "# Real Agent development assignment: T-002\n\nUse the installed Pi Development Harness tools to implement action-based model routing in this project. The user authorized this work and publication later; this task only changes and validates source.\n\nPlan the current task with modules `backend`, `frontend`, `qa`; scope `yang/chat.py`, `web/src/04_agent.js`, `tests/test_chat.py`; kind bugfix; impact behavior. Acceptance criteria: two configured models can route ask and name to different IDs; invalid configured m",
+        "kind": "bugfix",
+        "impact": "behavior",
+        "modules": [
+          "backend",
+          "frontend",
+          "qa"
+        ],
+        "scope": [
+          "yang/chat.py",
+          "web/src/04_agent.js",
+          "tests/test_chat.py"
+        ],
+        "acceptance": [
+          "two configured models can route ask and name to different IDs",
+          "invalid configured model IDs produce a clear error",
+          "existing default behavior remains compatible",
+          "frontend passes an action",
+          "actual project-tests and web-syntax runners pass"
+        ],
+        "id": "DEV-ab6fdbe44d9e",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-11T11:25:23.306893+00:00",
+        "updated_at": "2026-09-11T11:28:06.742249+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
+    },
+    {
+      "id": "event:75d31cce997d48f395da0fe78f8432b8",
+      "type": "event",
+      "label": "initialized",
+      "data": {
+        "schema_version": 2,
+        "id": "75d31cce997d48f395da0fe78f8432b8",
+        "sequence": 1,
+        "type": "initialized",
+        "timestamp": "2026-09-11T11:17:52.157739+00:00",
+        "profile": "solo-light"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "62456847dd05cba83118f8b86be93ccbbc469fa21b398f64e62e78655298d97c",
+      "source": "project",
+      "target": "module:backend",
+      "type": "contains"
+    },
+    {
+      "id": "64302c6b9e8465a1776a0e780fe3e1aebd7ab9d8decb7fdfb595867116dd4711",
+      "source": "project",
+      "target": "module:frontend",
+      "type": "contains"
+    },
+    {
+      "id": "c4d135afd68a6c268fd1006ce7a415277eb448bd5675a18f6a11df5dc762b8dd",
+      "source": "module:frontend",
+      "target": "module:backend",
+      "type": "depends_on"
+    },
+    {
+      "id": "a304c4553ce4c8ab18bb7f969d23c65ce8e8443e87ea15028d52642548fb62e3",
+      "source": "project",
+      "target": "module:qa",
+      "type": "contains"
+    },
+    {
+      "id": "786580d23652b7178b78279d502dc5ee0f34360f180d95fa623393b1a524d9f2",
+      "source": "module:qa",
+      "target": "module:backend",
+      "type": "tests_for"
+    },
+    {
+      "id": "5807f35bcb05558ce249c32f4b1d63e3d7f94dcb1cd8c133ac5b7f07b0ef1421",
+      "source": "module:qa",
+      "target": "module:frontend",
+      "type": "tests_for"
+    },
+    {
+      "id": "04c6940cf1cf1ee43ab935d703c95ee544bb1eb541994d2acf33b9ccec8d1946",
+      "source": "project",
+      "target": "module:ops",
+      "type": "contains"
+    },
+    {
+      "id": "0b823eaf79c4b3b0b30722f5ae8be3d772970732b1d2ec77b33c976d41f14fd7",
+      "source": "work:DEV-ab6fdbe44d9e",
+      "target": "module:backend",
+      "type": "affects"
+    },
+    {
+      "id": "dc6ac7fe1f516e0dc91182f745006f11da96aa19dccc3f39aad8fce2f100cc2f",
+      "source": "work:DEV-ab6fdbe44d9e",
+      "target": "module:frontend",
+      "type": "affects"
+    },
+    {
+      "id": "28df0ec1a7b6f2b7e218d5a5cb0902e018a54769db49b3715b8e3f66f535f411",
+      "source": "work:DEV-ab6fdbe44d9e",
+      "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "5e48ff69de872118999c663abb4a86a08402dfaa4e6b60b541d6ed0760eae051",
+      "source": "event:75d31cce997d48f395da0fe78f8432b8",
+      "target": "project",
+      "type": "records"
+    }
+  ],
+  "policy": {
+    "profile": "multi-agent",
+    "coordination": {
+      "mode": "enforced",
+      "lease_seconds": 1800
+    },
+    "runtime_enforcement": true,
+    "hook": "enforced",
+    "code_globs": [
+      "**/*.py",
+      "**/*.js",
+      "**/*.ts",
+      "**/*.jsx",
+      "**/*.tsx",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.go",
+      "**/*.rs",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.c",
+      "**/*.h",
+      "**/*.cpp",
+      "**/*.cs",
+      "**/*.rb",
+      "**/*.php",
+      "**/*.swift",
+      "**/*.css",
+      "**/*.html",
+      "**/*.vue",
+      "**/*.svelte",
+      "**/*.sh",
+      "**/*.ps1",
+      "**/*.sql"
+    ],
+    "workflow": {
+      "states": [
+        "proposed",
+        "approved",
+        "implementing",
+        "verifying",
+        "done",
+        "cancelled"
+      ],
+      "transitions": {
+        "proposed": [
+          "approved",
+          "cancelled"
+        ],
+        "approved": [
+          "implementing",
+          "cancelled"
+        ],
+        "implementing": [
+          "verifying",
+          "cancelled"
+        ],
+        "verifying": [
+          "implementing",
+          "done"
+        ],
+        "done": [],
+        "cancelled": []
+      }
+    },
+    "gate_impacts": [
+      "architecture",
+      "boundary"
+    ],
+    "allow_mechanical_skip": false,
+    "update_impacts": [
+      "behavior",
+      "interface",
+      "boundary",
+      "architecture"
+    ],
+    "phase_transitions": {
+      "PHASE_0_EMPTY": {
+        "PHASE_1_REQUIREMENTS": []
+      },
+      "PHASE_1_REQUIREMENTS": {
+        "PHASE_2_ARCHITECTURE": [
+          "G1"
+        ]
+      },
+      "PHASE_2_ARCHITECTURE": {
+        "PHASE_3_MODULE_DESIGN": [
+          "G2"
+        ]
+      },
+      "PHASE_3_MODULE_DESIGN": {
+        "PHASE_4_IMPLEMENTATION": [
+          "G3"
+        ]
+      },
+      "PHASE_4_IMPLEMENTATION": {
+        "PHASE_5_EVOLUTION": []
+      },
+      "PHASE_5_EVOLUTION": {
+        "PHASE_2_ARCHITECTURE": [
+          "evolution-review"
+        ],
+        "PHASE_3_MODULE_DESIGN": [
+          "evolution-review"
+        ]
+      }
+    }
+  },
+  "coupling": {
+    "red_lines": [
+      {
+        "change": "yang/jsonl.py",
+        "must_also_change": [
+          "web/src/yangdata.js"
+        ],
+        "reason": "Cross-language format parity"
+      },
+      {
+        "change": "web/src/yangdata.js",
+        "must_also_change": [
+          "yang/jsonl.py"
+        ],
+        "reason": "Cross-language format parity"
+      }
+    ]
+  },
+  "guarantees": {
+    "coordination": "enforced",
+    "lease_scope": "same canonical checkout on one machine",
+    "pi_known_write_interception": true,
+    "shell_sandbox": false,
+    "authenticated_identity": false,
+    "immutable_events": "append-only through API; repository writers remain trusted",
+    "hook": "enforced"
+  },
+  "leases_included": false
+}

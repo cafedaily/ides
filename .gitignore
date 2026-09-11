@@ -4,3 +4,14 @@ __pycache__/
 yang.db
 web/index.html
 .structure/tmp/
+.structure/runtime/
+*.db-wal
+*.db-shm
+*.sqlite*
+.env
+.env.*
+!.env.example
+node_modules/
+test-results/
+playwright-report/
+deployment-access.txt

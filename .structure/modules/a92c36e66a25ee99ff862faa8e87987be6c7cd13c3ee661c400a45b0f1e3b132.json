@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "module": "ops",
+  "truths": [],
+  "dont_assume": [
+    "Module IDs are not source paths.",
+    "User data and model credentials live outside this repository."
+  ],
+  "notes": "Fresh state for the user-authorized 0.2.1 development and deployment goal."
+}

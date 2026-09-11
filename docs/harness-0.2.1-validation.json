@@ -1,0 +1,55 @@
+{
+  "harness_version": "0.2.1",
+  "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+  "legacy_state_reset": true,
+  "business_data_moved_outside_repository": true,
+  "baseline": {
+    "project_passed": 94,
+    "project_failed": 0,
+    "harness_python_passed": 43,
+    "harness_python_skipped": 1,
+    "harness_node_passed": 16,
+    "core_python_passed": 31,
+    "core_node_passed": 7
+  },
+  "real_development": {
+    "real_model_call": true,
+    "model": "gpt-5.5",
+    "provider": "operator-configured OpenAI-compatible endpoint",
+    "task_id": "DEV-ab6fdbe44d9e",
+    "completed": true,
+    "turns": 44,
+    "tool_calls": 48,
+    "cost_measured": false,
+    "children": [
+      {
+        "id": "d03083ba712442ed8b761a4821d9a341",
+        "status": "accepted",
+        "agent": "worker",
+        "usage": {
+          "turns": 12,
+          "tool_calls": 18,
+          "input_tokens": 115284,
+          "output_tokens": 3988,
+          "cost": null,
+          "model": {
+            "provider": "ideas-configured",
+            "id": "gpt-5.5"
+          },
+          "activity": "subagent_report",
+          "duration_ms": 48447
+        }
+      }
+    ]
+  },
+  "remaining": [
+    "authentication and credential protection",
+    "SSE streaming",
+    "synonym and semantic recall",
+    "incremental graph benchmark",
+    "incremental synchronization",
+    "browser acceptance",
+    "ten HTTPS deployment",
+    "public ides repository and harness case study"
+  ]
+}

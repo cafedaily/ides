@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "module": "frontend",
+  "truths": [
+    {
+      "statement": "The browser AI wrapper posts body.action to /api/chat whenever the call options include action."
+    },
+    {
+      "statement": "say() forwards explicit action options to AI/AI.json, including agShape action ask and agName action name."
+    },
+    {
+      "statement": "actionFromPrompt preserves existing ask, angle, collide and rewrite routing by deriving those action keys from current prompt text when callers do not pass an explicit action."
+    }
+  ],
+  "dont_assume": [
+    "Frontend action routing exposes no model API keys; keys stay in backend model configuration.",
+    "The local Claude extension path may bypass /api/chat because action forwarding only applies to the API-backed AI wrapper."
+  ]
+}

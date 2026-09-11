@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "title": "# Real Agent development assignment: T-002\n\nUse the installed Pi Development Harness tools to implement action-based model routing in this project. The user authorized this work and publication later; this task only changes and validates source.\n\nPlan the current task with modules `backend`, `frontend`, `qa`; scope `yang/chat.py`, `web/src/04_agent.js`, `tests/test_chat.py`; kind bugfix; impact behavior. Acceptance criteria: two configured models can route ask and name to different IDs; invalid configured m",
+  "kind": "bugfix",
+  "impact": "behavior",
+  "modules": [
+    "backend",
+    "frontend",
+    "qa"
+  ],
+  "scope": [
+    "yang/chat.py",
+    "web/src/04_agent.js",
+    "tests/test_chat.py"
+  ],
+  "acceptance": [
+    "two configured models can route ask and name to different IDs",
+    "invalid configured model IDs produce a clear error",
+    "existing default behavior remains compatible",
+    "frontend passes an action",
+    "actual project-tests and web-syntax runners pass"
+  ],
+  "id": "DEV-ab6fdbe44d9e",
+  "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+  "state": "done",
+  "created_at": "2026-09-11T11:25:23.306893+00:00",
+  "updated_at": "2026-09-11T11:28:06.742249+00:00",
+  "managed_by": "pi-development-harness",
+  "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+}

@@ -17,6 +17,7 @@ async function _initAI(){
       msgs.push({role:"user", content:user});
       const body = { messages:msgs };
       if(opts.json) body.json = true;
+      if(opts.action) body.action = opts.action;
       const r = await API._post("/api/chat", body);
       if(!r.ok) throw new Error(r.error || "模型调用失败");
       const text = (r.text || "").trim();
@@ -42,11 +43,21 @@ function tone(){
 const NOSLOP = "中文，直接对他说。必须贴着这个想法本身，把里面的具体东西说出来。"
   + "不要通用套话，不要「你可以考虑」这类废话，不要引号、编号、解释、开场白。";
 
+function actionFromPrompt(input){
+  const s = typeof input === "string" ? input : ((input && (input.user || input.prompt || input.system)) || "");
+  if(s.indexOf("给下面这个想法起个名字")>=0) return "name";
+  if(s.indexOf("按记录重写")>=0 || s.indexOf("把这些揉成一段")>=0) return "rewrite";
+  if(s.indexOf("碰一下")>=0 || s.indexOf("撞在一起")>=0 || s.indexOf("硬塞进这个想法")>=0) return "collide";
+  if(s.indexOf("换个角度")>=0 || s.indexOf("换角度")>=0) return "angle";
+  if(s.indexOf("追问")>=0 || s.indexOf("逼他把")>=0) return "ask";
+  return null;
+}
 async function say(input, o){
   o = o || {};
   if(!AI) return null;
-  if(o.json) return await AI.json(input, { modelTier:o.tier||"default", signal:o.signal, cache:o.cache!==false });
-  const r = await AI(input, { modelTier:o.tier||"quick", signal:o.signal, onText:o.onText, cache:false });
+  const action = o.action || actionFromPrompt(input);
+  if(o.json) return await AI.json(input, { modelTier:o.tier||"default", action:action, signal:o.signal, cache:o.cache!==false });
+  const r = await AI(input, { modelTier:o.tier||"quick", action:action, signal:o.signal, onText:o.onText, cache:false });
   return String(r && r.text || "").trim().replace(/^[「『"']+|[」』"']+$/g,"").trim();
 }
 function ideaCtx(it){
@@ -113,7 +124,7 @@ async function agShape(text){
       "title：给它起个名字，不超过 14 个字，用他自己的词。不要加「平台」「系统」「助手」这类壳子。\n"+
       "seed：把这句念头理成一句话，保留他原来的说法，别拔高，别替他扩写。\n"+
       "first：一个追问，逼他把这个念头说具体。要贴着它本身，不要通用问题。",
-      { json:true, tier:"quick" });
+      { json:true, tier:"quick", action:"ask" });
     if(r && typeof r.title==="string" && r.title.trim())
       return { title:cleanTitle(r.title, text.trim().slice(0,14)),
                seed:(r.seed||text).trim().slice(0,600),
@@ -125,7 +136,7 @@ async function agShape(text){
 async function agName(it){
   const r = await say("给下面这个想法起个名字。\n\n"+ideaCtx(it)+
     "\n\n不超过 14 个字，用他自己的词，别加「平台」「系统」「助手」这类壳子。只回名字本身。",
-    { tier:"quick" });
+    { tier:"quick", action:"name" });
   return r ? cleanTitle(r, null) : null;
 }
 /* 分叉方向 */

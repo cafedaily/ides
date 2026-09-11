@@ -1,46 +1,7 @@
-# 任务队列
+# Work items (generated)
 
-## 待做
+- DEV-ab6fdbe44d9e [done]: # Real Agent development assignment: T-002
 
-### T-001: /api/chat 流式支持
-- **优先级**: P2
-- **目标模块**: 后端/接口, 前端/智能体
-- **描述**: 当前 /api/chat 一次性返回全部文本。改成 SSE 流式，前端逐字显示。
-- **验收**: 长回答不再整段弹出，而是逐步出现
-- **来源**: debts.md #7
+Use the installed Pi Development Harness tools to implement action-based model routing in this project. The user authorized this work and publication later; this task only changes and validates source.
 
-### T-002: 按动作路由到不同模型
-- **优先级**: P2
-- **目标模块**: 后端/接口
-- **描述**: 当前 chat.py 只用 models[0]。应读 conf.route 分发不同动作到不同模型。
-- **验收**: 配置两个模型后，追问走模型 A、起名走模型 B
-- **来源**: debts.md #8
-
-### T-003: 接口认证
-- **优先级**: P1
-- **目标模块**: 后端/接口
-- **描述**: 当前所有 API 无认证。加 token 或 session 认证。
-- **验收**: 未认证请求返回 401
-- **来源**: debts.md #6
-
-### T-004: 实体同义归并
-- **优先级**: P2
-- **目标模块**: 后端/核心算法
-- **描述**: 当前实体归并只认同形字串。`每一步`/`每步`、`大模型`/`LLM` 不互认。
-- **验收**: 删虚字后的同形匹配或嵌入匹配
-- **来源**: debts.md #1
-
-### T-005: 图谱增量更新
-- **优先级**: P3
-- **目标模块**: 后端/核心算法, 后端/存储
-- **描述**: rebuild 每次从头算，几百篇开始慢。改增量实体更新 + 局部重建。
-- **验收**: 添加一篇后 rebuild 时间 < 全量的 30%
-- **来源**: debts.md #3
-
-## 进行中
-
-（无）
-
-## 已完成
-
-（无——之前的工作在 changelog 中记录，任务队列从此轮开始）
+Plan the current task with modules `backend`, `frontend`, `qa`; scope `yang/chat.py`, `web/src/04_agent.js`, `tests/test_chat.py`; kind bugfix; impact behavior. Acceptance criteria: two configured models can route ask and name to different IDs; invalid configured m

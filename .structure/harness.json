@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "runners": {
+    "project-tests": {
+      "kind": "validation",
+      "argv": [
+        "C:\\Program Files\\Python314\\python.exe",
+        "tests/run.py"
+      ],
+      "timeout_seconds": 180
+    },
+    "web-syntax": {
+      "kind": "validation",
+      "argv": [
+        "C:\\Program Files\\Python314\\python.exe",
+        "scripts/check_web.py"
+      ],
+      "timeout_seconds": 60
+    }
+  },
+  "exclude_directories": [
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".test-deps",
+    "dist",
+    "test-results",
+    "playwright-report",
+    "data"
+  ],
+  "session_ttl_seconds": 120,
+  "max_read_bytes": 1048576,
+  "required_checks": [
+    "project-tests",
+    "web-syntax"
+  ],
+  "require_check_for_changes": true,
+  "subagents": {
+    "max_concurrency": 2,
+    "max_batch": 8,
+    "max_turns": 24,
+    "timeout_seconds": 900,
+    "allowed_agents": [
+      "scout",
+      "reviewer",
+      "worker"
+    ]
+  }
+}

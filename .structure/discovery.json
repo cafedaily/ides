@@ -1,0 +1,134 @@
+{
+  "modules": {
+    "tests": {
+      "id": "tests",
+      "path": "tests",
+      "responsibility": "Discovered module; review its boundary",
+      "owns": [
+        "tests/**"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [],
+      "health": "unverified"
+    },
+    "web": {
+      "id": "web",
+      "path": "web",
+      "responsibility": "Discovered module; review its boundary",
+      "owns": [
+        "web/**"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [],
+      "health": "unverified"
+    },
+    "yang": {
+      "id": "yang",
+      "path": "yang",
+      "responsibility": "Discovered module; review its boundary",
+      "owns": [
+        "yang/**"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [],
+      "health": "unverified"
+    },
+    "root": {
+      "id": "root",
+      "path": ".",
+      "responsibility": "Project-level files",
+      "owns": [
+        ".gitignore",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "Makefile",
+        "README.md",
+        "pyproject.toml",
+        "yang.db",
+        "yang.db-shm",
+        "yang.db-wal",
+        ".clinerules/structure.md",
+        ".cursor/rules/structure.mdc",
+        ".github/copilot-instructions.md",
+        "docs/DEVELOPMENT_PLAN.md",
+        "docs/LEGACY_BACKLOG.md",
+        "docs/LEGACY_DEBTS.md"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [],
+      "health": "unverified"
+    }
+  },
+  "files": [
+    ".gitignore",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "Makefile",
+    "README.md",
+    "pyproject.toml",
+    "yang.db",
+    "yang.db-shm",
+    "yang.db-wal",
+    ".clinerules/structure.md",
+    ".cursor/rules/structure.mdc",
+    ".github/copilot-instructions.md",
+    "docs/DEVELOPMENT_PLAN.md",
+    "docs/LEGACY_BACKLOG.md",
+    "docs/LEGACY_DEBTS.md",
+    "tests/run.py",
+    "tests/test_api.py",
+    "tests/test_entity.py",
+    "tests/test_graph.py",
+    "tests/test_jsonl.py",
+    "tests/test_terms.py",
+    "tests/test_text.py",
+    "web/build.py",
+    "web/index.html",
+    "web/src/01_state.js",
+    "web/src/02_db.js",
+    "web/src/03_api.js",
+    "web/src/04_agent.js",
+    "web/src/05_today.js",
+    "web/src/06_idea.js",
+    "web/src/07_data.js",
+    "web/src/09_boot.js",
+    "web/src/app.css",
+    "web/src/body.html",
+    "web/src/extra.css",
+    "web/src/graph.css",
+    "web/src/graph_view.js",
+    "web/src/yangdata.js",
+    "yang/__init__.py",
+    "yang/__main__.py",
+    "yang/api.py",
+    "yang/chat.py",
+    "yang/cli.py",
+    "yang/db.py",
+    "yang/demo.py",
+    "yang/entity.py",
+    "yang/graph.py",
+    "yang/jsonl.py",
+    "yang/server.py",
+    "yang/store.py",
+    "yang/terms.py",
+    "yang/text.py"
+  ],
+  "warnings": [],
+  "discovery": {
+    "methods": [
+      "node-workspaces",
+      "cargo-workspaces",
+      "top-level-fallback"
+    ],
+    "confidence": "draft",
+    "requires_review": true
+  }
+}

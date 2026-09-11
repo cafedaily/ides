@@ -1,0 +1,204 @@
+{
+  "schema_version": 2,
+  "modules": {
+    "backend": {
+      "id": "backend",
+      "path": "yang",
+      "responsibility": "Text, entities, graph, persistence, HTTP API and model proxy",
+      "owns": [
+        "yang/**"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [],
+      "health": "unverified"
+    },
+    "frontend": {
+      "id": "frontend",
+      "path": "web",
+      "responsibility": "Accessible idea workspace, offline storage, streaming and synchronization",
+      "owns": [
+        "web/**"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [
+        "backend"
+      ],
+      "tests_for": [],
+      "health": "unverified"
+    },
+    "qa": {
+      "id": "qa",
+      "path": "tests",
+      "responsibility": "Business, protocol and integration regression coverage",
+      "owns": [
+        "tests/**"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [
+        "backend",
+        "frontend"
+      ],
+      "health": "unverified"
+    },
+    "ops": {
+      "id": "ops",
+      "path": ".",
+      "responsibility": "Build, documentation, deployment and release evidence",
+      "owns": [
+        "README.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "Makefile",
+        "pyproject.toml",
+        ".gitignore",
+        ".gitattributes",
+        ".github/**",
+        ".cursor/**",
+        ".clinerules/**",
+        "docs/**",
+        "scripts/**",
+        "deploy/**",
+        "package.json",
+        "package-lock.json",
+        "playwright.config.*",
+        ".env.example"
+      ],
+      "may_touch": [],
+      "forbidden": [],
+      "depends_on": [],
+      "tests_for": [],
+      "health": "unverified"
+    }
+  },
+  "coupling": {
+    "red_lines": [
+      {
+        "change": "yang/jsonl.py",
+        "must_also_change": [
+          "web/src/yangdata.js"
+        ],
+        "reason": "Cross-language format parity"
+      },
+      {
+        "change": "web/src/yangdata.js",
+        "must_also_change": [
+          "yang/jsonl.py"
+        ],
+        "reason": "Cross-language format parity"
+      }
+    ]
+  },
+  "policy": {
+    "profile": "multi-agent",
+    "coordination": {
+      "mode": "enforced",
+      "lease_seconds": 1800
+    },
+    "runtime_enforcement": true,
+    "hook": "enforced",
+    "code_globs": [
+      "**/*.py",
+      "**/*.js",
+      "**/*.ts",
+      "**/*.jsx",
+      "**/*.tsx",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.go",
+      "**/*.rs",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.c",
+      "**/*.h",
+      "**/*.cpp",
+      "**/*.cs",
+      "**/*.rb",
+      "**/*.php",
+      "**/*.swift",
+      "**/*.css",
+      "**/*.html",
+      "**/*.vue",
+      "**/*.svelte",
+      "**/*.sh",
+      "**/*.ps1",
+      "**/*.sql"
+    ],
+    "workflow": {
+      "states": [
+        "proposed",
+        "approved",
+        "implementing",
+        "verifying",
+        "done",
+        "cancelled"
+      ],
+      "transitions": {
+        "proposed": [
+          "approved",
+          "cancelled"
+        ],
+        "approved": [
+          "implementing",
+          "cancelled"
+        ],
+        "implementing": [
+          "verifying",
+          "cancelled"
+        ],
+        "verifying": [
+          "implementing",
+          "done"
+        ],
+        "done": [],
+        "cancelled": []
+      }
+    },
+    "gate_impacts": [
+      "architecture",
+      "boundary"
+    ],
+    "allow_mechanical_skip": false,
+    "update_impacts": [
+      "behavior",
+      "interface",
+      "boundary",
+      "architecture"
+    ],
+    "phase_transitions": {
+      "PHASE_0_EMPTY": {
+        "PHASE_1_REQUIREMENTS": []
+      },
+      "PHASE_1_REQUIREMENTS": {
+        "PHASE_2_ARCHITECTURE": [
+          "G1"
+        ]
+      },
+      "PHASE_2_ARCHITECTURE": {
+        "PHASE_3_MODULE_DESIGN": [
+          "G2"
+        ]
+      },
+      "PHASE_3_MODULE_DESIGN": {
+        "PHASE_4_IMPLEMENTATION": [
+          "G3"
+        ]
+      },
+      "PHASE_4_IMPLEMENTATION": {
+        "PHASE_5_EVOLUTION": []
+      },
+      "PHASE_5_EVOLUTION": {
+        "PHASE_2_ARCHITECTURE": [
+          "evolution-review"
+        ],
+        "PHASE_3_MODULE_DESIGN": [
+          "evolution-review"
+        ]
+      }
+    }
+  }
+}
