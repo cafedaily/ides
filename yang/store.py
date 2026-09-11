@@ -1,4 +1,5 @@
 """想法的读写，以及「拆成带维度的片段」——图谱唯一的输入。"""
+import copy
 import time
 
 from . import db as _db
@@ -10,6 +11,54 @@ KINDS = ("ask", "angle", "collide", "note")
 
 def now_ms():
     return int(time.time() * 1000)
+
+
+# ---------- 配置里的密钥 ----------
+def _model_id(m):
+    if not isinstance(m, dict):
+        return ""
+    return str(m.get("id") or "")
+
+
+def _merge_conf_keys(c, conf):
+    """Preserve existing model keys by id unless the incoming model explicitly clears them."""
+    incoming = copy.deepcopy(conf)
+    if not isinstance(incoming, dict):
+        return incoming
+    existing = _db.kv_get(c, "conf", None) or {}
+    old_by_id = {}
+    for m in existing.get("models", []) if isinstance(existing, dict) else []:
+        mid = _model_id(m)
+        if mid and isinstance(m, dict) and m.get("key"):
+            old_by_id[mid] = m.get("key")
+    for m in incoming.get("models", []) or []:
+        if not isinstance(m, dict):
+            continue
+        mid = _model_id(m)
+        if m.get("clear_key") is True:
+            m["key"] = ""
+        elif mid and ("key" not in m or m.get("key") == "") and old_by_id.get(mid):
+            m["key"] = old_by_id[mid]
+        m.pop("clear_key", None)
+        m.pop("keyConfigured", None)
+    return incoming
+
+
+def redacted_conf(conf):
+    """Return conf without model keys, adding keyConfigured metadata."""
+    if conf is None:
+        return None
+    out = copy.deepcopy(conf)
+    if not isinstance(out, dict):
+        return out
+    for m in out.get("models", []) or []:
+        if not isinstance(m, dict):
+            continue
+        configured = bool(m.get("key"))
+        m.pop("key", None)
+        m.pop("clear_key", None)
+        m["keyConfigured"] = configured
+    return out
 
 
 # ---------- 读 ----------
@@ -33,9 +82,10 @@ def cold(c):
     return [dict(r) for r in c.execute("SELECT * FROM cold ORDER BY at DESC")]
 
 
-def state(c):
+def state(c, include_keys=False):
+    conf = _db.kv_get(c, "conf", None)
     return {"ideas": ideas(c), "sparks": sparks(c), "cold": cold(c),
-            "conf": _db.kv_get(c, "conf", None)}
+            "conf": conf if include_keys else redacted_conf(conf)}
 
 
 # ---------- 写 ----------
@@ -77,7 +127,7 @@ def load_state(c, st, mode="merge"):
     for x in st.get("cold", []):
         put_cold(c, x)
     if st.get("conf"):
-        _db.kv_set(c, "conf", st["conf"])
+        _db.kv_set(c, "conf", _merge_conf_keys(c, st["conf"]))
     c.commit()
 
 

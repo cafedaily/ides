@@ -3,11 +3,11 @@ import json
 import os
 import sys
 
-from . import db, jsonl, server, store
+from . import auth, db, jsonl, server, store
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-DEFAULT_DB = os.environ.get("YANG_DB", "yang.db")
+DEFAULT_DB = os.environ.get("YANG_DB", os.path.join(os.path.expanduser("~"), ".yang", "yang.db"))
 DEFAULT_WEB = os.environ.get("YANG_WEB", os.path.join(ROOT, "web"))
 
 
@@ -36,6 +36,8 @@ def main(argv=None):
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8730)
     s.add_argument("--web", default=DEFAULT_WEB)
+    s.add_argument("--unsafe-dev-no-auth", action="store_true",
+                   help="只给临时开发用：允许无认证绑定非本机地址")
 
     ns = p.parse_args(argv)
     conn = db.connect(ns.db)
@@ -62,7 +64,7 @@ def main(argv=None):
         print("导好了，图也重建了。")
 
     elif ns.cmd == "export":
-        txt = jsonl.export(store.state(conn), ns.pw)
+        txt = jsonl.export(store.state(conn, include_keys=bool(ns.pw)), ns.pw)
         if ns.out:
             open(ns.out, "w", encoding="utf-8").write(txt)
             print("写到 %s（%d 字节）" % (ns.out, len(txt)))
@@ -113,7 +115,11 @@ def main(argv=None):
 
     elif ns.cmd == "serve":
         conn.close()
-        server.serve(ns.db, ns.web, ns.host, ns.port)
+        try:
+            server.serve(ns.db, ns.web, ns.host, ns.port, unsafe_no_auth=ns.unsafe_dev_no_auth)
+        except auth.AuthConfigError as e:
+            print("启动被拒绝：%s" % e, file=sys.stderr)
+            return 2
         return 0
 
     conn.commit()

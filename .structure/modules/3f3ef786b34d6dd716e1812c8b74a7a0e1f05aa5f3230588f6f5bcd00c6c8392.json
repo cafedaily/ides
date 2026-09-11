@@ -3,23 +3,14 @@
   "module": "qa",
   "truths": [
     {
-      "statement": "tests/test_chat.py covers default first-model selection with no action or route."
+      "statement": "tests/test_security.py uses synthetic credentials and ephemeral local HTTP servers to cover production token refusal, anonymous/public health, unauthorized private routes, login/session/logout, bearer and cookie flows, origin rejection, key redaction/preserve/clear behavior, plain export key stripping, malformed Content-Length rejection, contained static paths, non-loopback startup refusal, and legacy API health counts."
     },
     {
-      "statement": "tests/test_chat.py covers ask and name actions routing to distinct configured model IDs using a monkeypatched urlopen rather than network."
-    },
-    {
-      "statement": "tests/test_chat.py covers existing ask, angle, collide and rewrite route keys."
-    },
-    {
-      "statement": "tests/test_chat.py verifies invalid configured model IDs return a clear error and do not make an outbound request."
-    },
-    {
-      "statement": "development_check project-tests passed with 99 passing tests, including 5 chat routing tests; development_check web-syntax passed."
+      "statement": "Current validation evidence for T-003: development_check project-tests passed with 110 tests passing; development_check web-syntax passed."
     }
   ],
   "dont_assume": [
-    "Subagent-reported validation is not evidence unless parent invokes development_check.",
-    "Chat routing tests do not contact real model services or expose credentials."
+    "Security tests use real production credentials; all tokens and origins in tests are synthetic.",
+    "Passing backend tests means frontend authentication UI is implemented; that is a later task."
   ]
 }

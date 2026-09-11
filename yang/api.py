@@ -21,6 +21,18 @@ def health(c, q, b):
             "cold": len(store.cold(c)), "graph_at": _db.kv_get(c, "graph_at", 0)}
 
 
+def public_health(c, q, b):
+    return {"ok": True, "app": "养想法", "fmt": jsonl.FMT, "v": jsonl.V}
+
+
+def private_health(c, q, b):
+    return health(c, q, b)
+
+
+def session(c, q, b):
+    return {"ok": True, "authenticated": True}
+
+
 def get_state(c, q, b):
     return store.state(c)
 
@@ -37,7 +49,7 @@ def put_state(c, q, b):
     if errs:
         raise Err(422, "；".join(e["msg"] for e in errs[:5]))
     store.load_state(c, b, mode)
-    return {"ok": True, "mode": mode, **health(c, q, b)}
+    return {"ok": True, "mode": mode, **private_health(c, q, b)}
 
 
 def graph(c, q, b):
@@ -104,7 +116,7 @@ def search(c, q, b):
 
 def export(c, q, b):
     pw = (q.get("pass") or [None])[0]
-    return {"text": jsonl.export(store.state(c), pw or None)}
+    return {"text": jsonl.export(store.state(c, include_keys=bool(pw)), pw or None)}
 
 
 def imp(c, q, b):
@@ -146,6 +158,7 @@ def _int(q, k, d, lo, hi):
 
 ROUTES = {
     ("GET", "/api/health"): health,
+    ("GET", "/api/session"): session,
     ("GET", "/api/state"): get_state,
     ("POST", "/api/state"): put_state,
     ("GET", "/api/graph"): graph,
@@ -158,6 +171,16 @@ ROUTES = {
     ("POST", "/api/rebuild"): rebuild,
     ("POST", "/api/chat"): do_chat,
 }
+
+PUBLIC_ROUTES = {
+    ("GET", "/api/health"),
+}
+
+SESSION_ROUTES = {
+    ("GET", "/api/session"),
+}
+
+MUTATION_ROUTES = {key for key in ROUTES if key[0] == "POST"}
 
 
 def dispatch(conn, method, route, query, body):

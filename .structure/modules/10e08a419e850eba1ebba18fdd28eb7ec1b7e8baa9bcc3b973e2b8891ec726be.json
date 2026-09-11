@@ -3,20 +3,27 @@
   "module": "backend",
   "truths": [
     {
-      "statement": "/api/chat backend model selection reads conf.models and optional conf.route[action]."
+      "statement": "Authentication helpers live in yang/auth.py and are stdlib-only: env policy loading, weak token detection, bearer validation, HMAC signed expiring session cookies, origin matching, and bounded login throttling."
     },
     {
-      "statement": "When body.action maps to a configured model id, yang/chat.py sends the OpenAI-compatible request to that model's base URL and model name."
+      "statement": "In production/non-loopback startup, YANG_AUTH_TOKEN must be a strong token; loopback development without a token remains compatible, and an explicit unsafe development flag allows non-loopback no-auth construction."
     },
     {
-      "statement": "Missing action, missing route, empty route value, or an unrouted action remains compatible by selecting the first configured model."
+      "statement": "The HTTP server enforces bearer or signed session-cookie authentication for private API routes when a token is configured or production mode is active. GET /api/health is publicly available and redacts counts for anonymous users; /api/session, /api/login, and /api/logout support frontend sessions."
     },
     {
-      "statement": "If conf.route[action] names a model id not present in conf.models, complete returns ok:false with an error naming the action and missing id before any outbound request."
+      "statement": "Cookie-authenticated mutations are checked against YANG_PUBLIC_ORIGIN; explicit bearer clients may mutate cross-origin. Session cookies are HttpOnly, SameSite=Strict, expiring, and Secure in production policy."
+    },
+    {
+      "statement": "GET /api/state redacts model keys and reports keyConfigured. State/config writes preserve existing model keys by model id when omitted or blank, and clear them only when clear_key=true. Plain exports do not leak model keys."
+    },
+    {
+      "statement": "The server validates Content-Length, caps JSON request bodies, uses finite socket timeouts, returns generic internal-error responses, and resolves static file paths under the configured web root."
     }
   ],
   "dont_assume": [
-    "Model API keys must not be printed or exposed to the frontend.",
-    "Configured model routes are validated at request time, not during data-entry rendering."
+    "Frontend authentication UI is implemented; this task only added backend endpoints and tests.",
+    "chat.py streaming authentication behavior is changed; chat.py was not modified.",
+    "User databases, production tokens, or deployment credentials are available in the repository."
   ]
 }

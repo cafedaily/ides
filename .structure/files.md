@@ -9,10 +9,13 @@
 - .clinerules/structure.md
 - .cursor/rules/structure.mdc
 - .github/copilot-instructions.md
+- docs/AGENT_ASSIGNMENT_AUTH.md
 - docs/AGENT_ASSIGNMENT_ROUTING.md
 - docs/DEVELOPMENT_PLAN.md
+- docs/HARNESS_FINDINGS.md
 - docs/LEGACY_BACKLOG.md
 - docs/LEGACY_DEBTS.md
+- docs/harness-0.2.1-validation.json
 - scripts/check_web.py
 - tests/run.py
 - tests/test_api.py
@@ -20,6 +23,7 @@
 - tests/test_entity.py
 - tests/test_graph.py
 - tests/test_jsonl.py
+- tests/test_security.py
 - tests/test_terms.py
 - tests/test_text.py
 - web/build.py
@@ -41,6 +45,7 @@
 - yang/__init__.py
 - yang/__main__.py
 - yang/api.py
+- yang/auth.py
 - yang/chat.py
 - yang/cli.py
 - yang/db.py

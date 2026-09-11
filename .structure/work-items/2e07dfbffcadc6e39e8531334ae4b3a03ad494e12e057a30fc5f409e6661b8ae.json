@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "title": "# T-003: Public deployment authentication and secret handling\n\nThe user explicitly authorized completing this project and deploying it at ideas.cafedaily.top. Implement and validate the backend prerequisites using the installed 0.2.1 harness. Do not deploy in this task.\n\nPlan modules backend and qa; scope yang/auth.py, yang/server.py, yang/api.py, yang/store.py, yang/cli.py, tests/test_security.py. Kind feature, impact behavior. Acceptance criteria:\n\n1. In production mode an absent/weak YANG_AUTH_TOKEN prev",
+  "kind": "feature",
+  "impact": "behavior",
+  "modules": [
+    "backend",
+    "qa"
+  ],
+  "scope": [
+    "yang/auth.py",
+    "yang/server.py",
+    "yang/api.py",
+    "yang/store.py",
+    "yang/cli.py",
+    "tests/test_security.py"
+  ],
+  "acceptance": [
+    "Production mode absent/weak YANG_AUTH_TOKEN prevents unsafe startup while loopback development and existing tests remain compatible.",
+    "Private API requests without valid bearer or signed HttpOnly session cookie return 401; GET /api/health remains public and redacted; GET /api/session, POST /api/login, POST /api/logout exist.",
+    "Login accepts JSON token only, throttles failures, issues expiring HttpOnly SameSite=Strict cookie; YANG_PUBLIC_ORIGIN governs same-origin mutation checks; production cookies are Secure; cross-origin cookie mutations fail while bearer clients work.",
+    "GET /api/state never returns model keys; state/config updates preserve keys by ID when omitted/blank and clear only with clear_key=true; keyConfigured metadata is present; import/export compatible and plain exports never leak keys.",
+    "Content-Length is validated and capped, socket timeout finite, client errors are generic, and static paths are contained via resolved path checks.",
+    "CLI default database location is outside source tree; explicit --db/YANG_DB still work; non-loopback bind without auth token refused unless unsafe development flag set; backend remains stdlib-only.",
+    "HTTP integration tests on ephemeral ports cover login, unauthorized reads/writes, cookie/bearer flows, origin rejection, model key redaction/preserve/clear, malformed lengths, and existing local behavior; project-tests and web-syntax pass.",
+    "A worker subagent handles a concrete subset; parent inspects and accepts output; backend and qa knowledge synchronized."
+  ],
+  "id": "DEV-d87c893d9908",
+  "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+  "state": "done",
+  "created_at": "2026-09-11T11:37:45.717746+00:00",
+  "updated_at": "2026-09-11T11:43:19.292091+00:00",
+  "managed_by": "pi-development-harness",
+  "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+}

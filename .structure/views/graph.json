@@ -39,21 +39,28 @@
         "module": "backend",
         "truths": [
           {
-            "statement": "/api/chat backend model selection reads conf.models and optional conf.route[action]."
+            "statement": "Authentication helpers live in yang/auth.py and are stdlib-only: env policy loading, weak token detection, bearer validation, HMAC signed expiring session cookies, origin matching, and bounded login throttling."
           },
           {
-            "statement": "When body.action maps to a configured model id, yang/chat.py sends the OpenAI-compatible request to that model's base URL and model name."
+            "statement": "In production/non-loopback startup, YANG_AUTH_TOKEN must be a strong token; loopback development without a token remains compatible, and an explicit unsafe development flag allows non-loopback no-auth construction."
           },
           {
-            "statement": "Missing action, missing route, empty route value, or an unrouted action remains compatible by selecting the first configured model."
+            "statement": "The HTTP server enforces bearer or signed session-cookie authentication for private API routes when a token is configured or production mode is active. GET /api/health is publicly available and redacts counts for anonymous users; /api/session, /api/login, and /api/logout support frontend sessions."
           },
           {
-            "statement": "If conf.route[action] names a model id not present in conf.models, complete returns ok:false with an error naming the action and missing id before any outbound request."
+            "statement": "Cookie-authenticated mutations are checked against YANG_PUBLIC_ORIGIN; explicit bearer clients may mutate cross-origin. Session cookies are HttpOnly, SameSite=Strict, expiring, and Secure in production policy."
+          },
+          {
+            "statement": "GET /api/state redacts model keys and reports keyConfigured. State/config writes preserve existing model keys by model id when omitted or blank, and clear them only when clear_key=true. Plain exports do not leak model keys."
+          },
+          {
+            "statement": "The server validates Content-Length, caps JSON request bodies, uses finite socket timeouts, returns generic internal-error responses, and resolves static file paths under the configured web root."
           }
         ],
         "dont_assume": [
-          "Model API keys must not be printed or exposed to the frontend.",
-          "Configured model routes are validated at request time, not during data-entry rendering."
+          "Frontend authentication UI is implemented; this task only added backend endpoints and tests.",
+          "chat.py streaming authentication behavior is changed; chat.py was not modified.",
+          "User databases, production tokens, or deployment credentials are available in the repository."
         ]
       },
       "source": ".structure/modules/10e08a419e850eba1ebba18fdd28eb7ec1b7e8baa9bcc3b973e2b8891ec726be.json"
@@ -123,24 +130,15 @@
         "module": "qa",
         "truths": [
           {
-            "statement": "tests/test_chat.py covers default first-model selection with no action or route."
+            "statement": "tests/test_security.py uses synthetic credentials and ephemeral local HTTP servers to cover production token refusal, anonymous/public health, unauthorized private routes, login/session/logout, bearer and cookie flows, origin rejection, key redaction/preserve/clear behavior, plain export key stripping, malformed Content-Length rejection, contained static paths, non-loopback startup refusal, and legacy API health counts."
           },
           {
-            "statement": "tests/test_chat.py covers ask and name actions routing to distinct configured model IDs using a monkeypatched urlopen rather than network."
-          },
-          {
-            "statement": "tests/test_chat.py covers existing ask, angle, collide and rewrite route keys."
-          },
-          {
-            "statement": "tests/test_chat.py verifies invalid configured model IDs return a clear error and do not make an outbound request."
-          },
-          {
-            "statement": "development_check project-tests passed with 99 passing tests, including 5 chat routing tests; development_check web-syntax passed."
+            "statement": "Current validation evidence for T-003: development_check project-tests passed with 110 tests passing; development_check web-syntax passed."
           }
         ],
         "dont_assume": [
-          "Subagent-reported validation is not evidence unless parent invokes development_check.",
-          "Chat routing tests do not contact real model services or expose credentials."
+          "Security tests use real production credentials; all tokens and origins in tests are synthetic.",
+          "Passing backend tests means frontend authentication UI is implemented; that is a later task."
         ]
       },
       "source": ".structure/modules/3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392.json"
@@ -189,6 +187,46 @@
         "notes": "Fresh state for the user-authorized 0.2.1 development and deployment goal."
       },
       "source": ".structure/modules/a92c36e66a25ee99ff862faa8e87987be6c7cd13c3ee661c400a45b0f1e3b132.json"
+    },
+    {
+      "id": "work:DEV-d87c893d9908",
+      "type": "work_item",
+      "label": "# T-003: Public deployment authentication and secret handling\n\nThe user explicitly authorized completing this project and deploying it at ideas.cafedaily.top. Implement and validate the backend prerequisites using the installed 0.2.1 harness. Do not deploy in this task.\n\nPlan modules backend and qa; scope yang/auth.py, yang/server.py, yang/api.py, yang/store.py, yang/cli.py, tests/test_security.py. Kind feature, impact behavior. Acceptance criteria:\n\n1. In production mode an absent/weak YANG_AUTH_TOKEN prev",
+      "data": {
+        "schema_version": 2,
+        "title": "# T-003: Public deployment authentication and secret handling\n\nThe user explicitly authorized completing this project and deploying it at ideas.cafedaily.top. Implement and validate the backend prerequisites using the installed 0.2.1 harness. Do not deploy in this task.\n\nPlan modules backend and qa; scope yang/auth.py, yang/server.py, yang/api.py, yang/store.py, yang/cli.py, tests/test_security.py. Kind feature, impact behavior. Acceptance criteria:\n\n1. In production mode an absent/weak YANG_AUTH_TOKEN prev",
+        "kind": "feature",
+        "impact": "behavior",
+        "modules": [
+          "backend",
+          "qa"
+        ],
+        "scope": [
+          "yang/auth.py",
+          "yang/server.py",
+          "yang/api.py",
+          "yang/store.py",
+          "yang/cli.py",
+          "tests/test_security.py"
+        ],
+        "acceptance": [
+          "Production mode absent/weak YANG_AUTH_TOKEN prevents unsafe startup while loopback development and existing tests remain compatible.",
+          "Private API requests without valid bearer or signed HttpOnly session cookie return 401; GET /api/health remains public and redacted; GET /api/session, POST /api/login, POST /api/logout exist.",
+          "Login accepts JSON token only, throttles failures, issues expiring HttpOnly SameSite=Strict cookie; YANG_PUBLIC_ORIGIN governs same-origin mutation checks; production cookies are Secure; cross-origin cookie mutations fail while bearer clients work.",
+          "GET /api/state never returns model keys; state/config updates preserve keys by ID when omitted/blank and clear only with clear_key=true; keyConfigured metadata is present; import/export compatible and plain exports never leak keys.",
+          "Content-Length is validated and capped, socket timeout finite, client errors are generic, and static paths are contained via resolved path checks.",
+          "CLI default database location is outside source tree; explicit --db/YANG_DB still work; non-loopback bind without auth token refused unless unsafe development flag set; backend remains stdlib-only.",
+          "HTTP integration tests on ephemeral ports cover login, unauthorized reads/writes, cookie/bearer flows, origin rejection, model key redaction/preserve/clear, malformed lengths, and existing local behavior; project-tests and web-syntax pass.",
+          "A worker subagent handles a concrete subset; parent inspects and accepts output; backend and qa knowledge synchronized."
+        ],
+        "id": "DEV-d87c893d9908",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-11T11:37:45.717746+00:00",
+        "updated_at": "2026-09-11T11:43:19.292091+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
     },
     {
       "id": "work:DEV-ab6fdbe44d9e",
@@ -281,6 +319,18 @@
       "source": "project",
       "target": "module:ops",
       "type": "contains"
+    },
+    {
+      "id": "993f6fc7630fc545b74f04f6bcc80a061c83e7743e5c7ae96089288865a57a70",
+      "source": "work:DEV-d87c893d9908",
+      "target": "module:backend",
+      "type": "affects"
+    },
+    {
+      "id": "5eeeb29b4090c4512e2f2893a497436d3b10058c40acd5ad10db4f6a3d5c82c1",
+      "source": "work:DEV-d87c893d9908",
+      "target": "module:qa",
+      "type": "affects"
     },
     {
       "id": "0b823eaf79c4b3b0b30722f5ae8be3d772970732b1d2ec77b33c976d41f14fd7",
