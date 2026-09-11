@@ -10,6 +10,7 @@
 - .clinerules/structure.md
 - .cursor/rules/structure.mdc
 - .github/copilot-instructions.md
+- deploy/cert-renew.sh
 - deploy/ides.service
 - deploy/install.sh
 - deploy/nginx-http.conf
@@ -27,6 +28,7 @@
 - docs/browser-validation.json
 - docs/graph-benchmark.json
 - docs/harness-0.2.1-validation.json
+- docs/live-validation.json
 - scripts/benchmark_graph.py
 - scripts/check_web.py
 - test-results/browser-validation.json

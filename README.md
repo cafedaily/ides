@@ -1,5 +1,7 @@
 # 养想法
 
+在线访问：[ideas.cafedaily.top](https://ideas.cafedaily.top)。
+
 基于 Pi Development Harness 0.2.1 实际开发验证的项目案例。公开演示与私有空间隔离，支持流式追问、版本冲突处理、增量图谱和可选语义召回。
 
 开发内核：[pi-development-harness](https://github.com/cafedaily/pi-development-harness)。验证记录见 [docs/harness-0.2.1-validation.json](docs/harness-0.2.1-validation.json)，部署与回滚见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。

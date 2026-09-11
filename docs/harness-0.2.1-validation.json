@@ -12,10 +12,6 @@
     "core_python_passed": 31,
     "core_node_passed": 7
   },
-  "remaining": [
-    "ten HTTPS deployment",
-    "public ides repository and harness case link"
-  ],
   "real_development_runs": [
     {
       "real_model_call": true,
@@ -106,5 +102,14 @@
     "graph_evidence": "graph-benchmark.json",
     "crypto": "Python and JavaScript AES-GCM encrypted export in both directions"
   },
-  "commit_adapter_correction": "Published 0.2.1 development runtime unchanged. Commit hook uses the separately fixed core source to allow staged review of completed tasks; runtime write checks remain strict."
+  "commit_adapter_correction": "Published 0.2.1 development runtime unchanged. Commit hook uses the separately fixed core source to allow staged review of completed tasks; runtime write checks remain strict.",
+  "delivery": {
+    "url": "https://ideas.cafedaily.top",
+    "repository": "https://github.com/cafedaily/ides",
+    "https_verified": true,
+    "live_evidence": "live-validation.json",
+    "source_public": true,
+    "release_tracking": "GitHub Releases",
+    "private_business_data_published": false
+  }
 }

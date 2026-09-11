@@ -214,6 +214,9 @@
           },
           {
             "statement": "Git text files use LF so source archives execute correctly on Linux even when built on Windows."
+          },
+          {
+            "statement": "ideas.cafedaily.top has verified HTTPS, private login, revision conflicts, AES-GCM export and a real upstream SSE call. Source is public at cafedaily/ides; private data and tokens remain outside Git."
           }
         ],
         "dont_assume": [
@@ -301,6 +304,37 @@
         "state": "done",
         "created_at": "2026-09-11T12:12:43.020392+00:00",
         "updated_at": "2026-09-11T12:25:35.847680+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
+    },
+    {
+      "id": "work:DEV-release-evidence",
+      "type": "work_item",
+      "label": "Record verified HTTPS delivery and portable deployment configuration",
+      "data": {
+        "schema_version": 2,
+        "title": "Record verified HTTPS delivery and portable deployment configuration",
+        "kind": "bugfix",
+        "impact": "behavior",
+        "modules": [
+          "ops"
+        ],
+        "scope": [
+          "docs/**",
+          "deploy/**",
+          "README.md",
+          ".github/workflows/**"
+        ],
+        "acceptance": [
+          "Published source documents actual local/browser/live acceptance with credential-free evidence",
+          "Nginx IPv4/IPv6 and certificate renewal configuration match the authorized deployment"
+        ],
+        "id": "DEV-release-evidence",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-11T12:31:37.692971+00:00",
+        "updated_at": "2026-09-11T12:31:52.090781+00:00",
         "managed_by": "pi-development-harness",
         "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
       }
@@ -500,6 +534,12 @@
     {
       "id": "d137ddb6d14b4efd5e1e94ec0f8013d109de50b9457c20ad5ad2629c06fad736",
       "source": "work:DEV-release-integration",
+      "target": "module:ops",
+      "type": "affects"
+    },
+    {
+      "id": "3f7db219fdac70646e538df41efc06ddbaacc1bf524735b0ea7a8598821c28a0",
+      "source": "work:DEV-release-evidence",
       "target": "module:ops",
       "type": "affects"
     },

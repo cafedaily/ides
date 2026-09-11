@@ -1,0 +1,16 @@
+{
+  "url": "https://ideas.cafedaily.top",
+  "checked_at": "2026-09-11T12:30:19.810Z",
+  "passed": true,
+  "checks": [
+    "HTTPS certificate trusted; public health redacted; private state requires login",
+    "Owner login works; Secure/HttpOnly/SameSite cookies; state has no model keys",
+    "Live revision sync adds/deletes a synthetic record and rejects stale revisions",
+    "Live upstream model SSE returns READY through the deployed authenticated proxy",
+    "Encrypted export uses POST and AES-GCM on production"
+  ],
+  "errors": [],
+  "real_upstream_model_call": true,
+  "cost_measured": false,
+  "synthetic_record_removed": true
+}

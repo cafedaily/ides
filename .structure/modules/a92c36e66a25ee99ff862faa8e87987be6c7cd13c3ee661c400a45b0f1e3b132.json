@@ -10,6 +10,9 @@
     },
     {
       "statement": "Git text files use LF so source archives execute correctly on Linux even when built on Windows."
+    },
+    {
+      "statement": "ideas.cafedaily.top has verified HTTPS, private login, revision conflicts, AES-GCM export and a real upstream SSE call. Source is public at cafedaily/ides; private data and tokens remain outside Git."
     }
   ],
   "dont_assume": [

@@ -8,6 +8,7 @@ Plan modules backend and qa; scope yang/auth.py, yang/server.py, yang/api.py, ya
 
 1. In production mode an absent/weak YANG_AUTH_TOKEN prev
 - DEV-release-integration [done]: Integrate revision sync, private workspace, exact graph and release acceptance
+- DEV-release-evidence [done]: Record verified HTTPS delivery and portable deployment configuration
 - DEV-ab6fdbe44d9e [done]: # Real Agent development assignment: T-002
 
 Use the installed Pi Development Harness tools to implement action-based model routing in this project. The user authorized this work and publication later; this task only changes and validates source.
