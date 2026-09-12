@@ -1,5 +1,5 @@
 [Unit]
-Description=Ideas private workspace
+Description=Ideas local-first static application
 After=network.target
 
 [Service]
@@ -7,10 +7,9 @@ Type=simple
 User=ides
 Group=ides
 WorkingDirectory=/opt/ides/current
-EnvironmentFile=/etc/ides/environment
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONDONTWRITEBYTECODE=1
-ExecStart=/usr/bin/python3 -m yang --db /var/lib/ides/yang.db serve --host 127.0.0.1 --port 8731 --web /opt/ides/current/dist
+ExecStart=/usr/bin/python3 -m http.server 8731 --bind 127.0.0.1 --directory /opt/ides/current/dist
 Restart=on-failure
 RestartSec=3
 UMask=0077
@@ -18,7 +17,6 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/ides
 
 [Install]
 WantedBy=multi-user.target

@@ -12,11 +12,9 @@ id ides >/dev/null 2>&1 || useradd --system --home /var/lib/ides --shell /usr/sb
 install -d -m 755 "$root/releases" "$release"
 install -d -o ides -g ides -m 700 /var/lib/ides
 install -d -m 700 /etc/ides
-test -s /etc/ides/environment
 tar -xzf "$archive" -C "$release"
 cd "$release"
 /usr/bin/python3 web/build.py --output "$release/dist/index.html"
-/usr/bin/python3 -c 'import cryptography; import yang.server'
 if test -L "$root/current"; then
   readlink -f "$root/current" > "$root/previous-release"
 fi
@@ -26,7 +24,7 @@ systemctl daemon-reload
 systemctl enable ides.service
 systemctl restart ides.service
 for attempt in $(seq 1 20); do
-  if curl -fsS http://127.0.0.1:8731/api/health >/dev/null; then exit 0; fi
+  if curl -fsS http://127.0.0.1:8731/ >/dev/null; then exit 0; fi
   sleep 1
 done
 echo 'Health check failed; use deploy/rollback.sh' >&2

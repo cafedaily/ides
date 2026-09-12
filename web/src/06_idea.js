@@ -19,7 +19,7 @@ function vOne(){
     const nb=el("button","tiny", naming?"…":"起个名"); nb.type="button"; nb.disabled=naming;
     nb.addEventListener("click",async ()=>{
       naming=true; vOne();
-      try{ const n=await agName(it); if(n){ it.title=n; save(); } }catch(e){}
+      try{ const n=await agName(it); if(n){ it.title=n; save(); } }catch(e){showToast(e.message||"模型请求失败，请重试。",true);}
       naming=false; vOne();
     });
     tw.appendChild(nb);
@@ -93,7 +93,7 @@ function focusTA(){ setTimeout(()=>{ const ta=document.querySelector(".prompt te
 async function draw(kind,it){
   stopLive(); redraft=null; forks=null;
   const used=it.grew.filter(g=>g.kind===kind).map(g=>g.q);
-  if(!AI){ const f=fallbackQ(kind,it,used); live={kind,q:f.q,with:f.with,by:"题库"}; vOne(); focusTA(); return; }
+  if(!requireModel())return;
 
   live={kind,q:"",loading:true}; vOne();
   const ac=new AbortController(); liveAbort=ac;
@@ -120,17 +120,22 @@ async function draw(kind,it){
     if(liveAbort!==ac) return;
     liveAbort=null;
     if(t) live={kind,q:t,with:withId,by:modelName(kind)};
-    else { const f=fallbackQ(kind,it,used); live={kind,q:f.q,with:f.with,by:"题库"}; }
+    else live={kind,error:"模型没有返回问题，请重试。"};
   }catch(e){
     if(e && e.code==="cancelled") return;
     if(liveAbort!==ac) return;
     liveAbort=null;
-    const f=fallbackQ(kind,it,used); live={kind,q:f.q,with:f.with,by:"题库"};
+    live={kind,error:e.message||"模型请求失败，请重试。"};
   }
   vOne(); focusTA();
 }
 function promptBox(it){
   const box=el("div","prompt");
+  if(live.error){
+    const message=el("p","error-message",live.error);message.setAttribute("role","alert");box.appendChild(message);
+    const retry=el("button","main","重试");retry.onclick=()=>draw(live.kind,it);box.appendChild(retry);
+    const config=el("button","secondary","检查模型配置");config.onclick=()=>{settingsTab="models";go("data");};box.appendChild(config);return box;
+  }
   box.appendChild(el("p","kind", KIND[live.kind] + (live.loading ? " · 正在读你写的" : (live.by?(" · "+live.by):""))));
   const qp=el("p","q d"+(live.loading&&!live.q?" wait":""), live.q||"");
   box.appendChild(qp);
@@ -163,11 +168,12 @@ function promptBox(it){
 
 /* 分叉 */
 async function doFork(it){
+  if(!requireModel())return;
   const epoch=workspaceEpoch;
   stopLive(); live=null; redraft=null;
   forks={ loading:true, dirs:null }; vOne();
   let d=null;
-  try{ d=await agFork(it); }catch(e){}
+  try{ d=await agFork(it); }catch(e){showToast(e.message||"模型请求失败，请重试。",true);}
   if(epoch!==workspaceEpoch) return;
   forks={ loading:false, dirs:d };
   if(S.v==="one") vOne();

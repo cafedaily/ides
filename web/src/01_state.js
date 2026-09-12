@@ -2,49 +2,9 @@ var YD = globalThis.YD;
 
 /* ================== 状态 ================== */
 const DAY = 86400000;
-function defaultConf(){
-  return { models:[{ id:"m0", name:"Claude", kind:"claude", base:"", key:"", model:"" }],
-           route:{ ask:"m0", angle:"m0", collide:"m0", rewrite:"m0" },
-           sharp:"normal", len:"one", seeGrew:true, seeOthers:true };
-}
-function seedState(){
-  const n = Date.now();
-  return {
-    ideas:[
-      { id:"s1", title:"一间只在下雨天开门的店",
-        seed:"如果有家店只在下雨天开门，会是什么店？",
-        now:"一间只在落雨时开的小铺。晴天锁门，雨天亮灯。\n卖什么反而不重要——「今天它开了」这件事本身变成一条消息。附近的人会因为下雨想起它，这才是核心。",
-        grew:[
-          { kind:"ask", q:"那个人现在是怎么凑合的？",
-            a:"下雨天大家其实无处可去，要么回家要么钻商场。没有一个地方是「因为下雨才存在」的。", at:n-13*DAY, by:"Claude" },
-          { kind:"angle", q:"假装它死了。写一句讣告，说明死因。",
-            a:"死于连续四十天没下雨。老板在门上贴了张纸：以后阴天也开。然后它就不特别了。", at:n-11*DAY, by:"Claude" },
-          { kind:"collide", q:"把「复印店」硬塞进这个想法里。",
-            a:"如果它本来就是间复印店呢？雨天来复印，顺手把湿掉的东西烘一烘。突然就没那么玄了，反而更站得住。", at:n-9*DAY, by:"Claude" }
-        ], created:n-16*DAY },
-      { id:"s2", title:"把每天走过的路画成一条线",
-        seed:"一年下来，这条线会是什么形状？", now:"", grew:[], created:n-DAY }
-    ],
-    sparks:[
-      { id:"k1", text:"图书馆里能不能借「一个下午的安静」", at:n-3*DAY },
-      { id:"k2", text:"路灯如果记得每天从它下面走过的人", at:n-11*DAY }
-    ],
-    cold:[
-      { id:"c1", title:"只有我和三个朋友的社交软件",
-        why:"聊到第三次才发现：我们不缺一个软件，缺的是一个定期见面的理由。方向一开始就错了——但这个发现比原来那个想法值钱。",
-        at:n-40*DAY }
-    ],
-    conf: defaultConf(), v:"today", tab:"live", cur:null, today:null
-  };
-}
-let SPACE = "demo", LS = "yang.demo.v2";
-function load(){ try{ const s=localStorage.getItem(LS); return s?JSON.parse(s):null; }catch(e){ return null; } }
-let S = load();
-let FRESH = !S;
-if(!S) S = { ideas:[], sparks:[], cold:[], conf:defaultConf(), v:"today", tab:"live", cur:null, today:null };
-if(!S.sparks) S.sparks = [];
-if(!S.conf) S.conf = defaultConf();
-if(!S.tab) S.tab = "live";
+function defaultConf(){return {models:[],defaultModel:"",route:{},sharp:"normal",len:"one",seeGrew:true,seeOthers:true,graph:{aliases:{},stopwords:[],adaptive:true}};}
+function emptyState(){return {space:null,ideas:[],sparks:[],cold:[],conf:defaultConf(),v:"today",tab:"live",cur:null,today:null};}
+let SPACE="",S=emptyState();
 
 /* ================== 工具 ================== */
 function el(t,c,x){ const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e; }
@@ -79,7 +39,7 @@ const IC = {
 };
 
 /* ================== 语音 ================== */
-const SRC = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SRC = null; // Voice input stays with the device keyboard; no browser speech service is invoked.
 let VC = { rec:null, ta:null, base:"", why:"", btn:null };
 const VERR = {
   "not-allowed":"这个页面拿不到麦克风。手机键盘上有个话筒键，那个在这儿一样能用，而且更稳。",

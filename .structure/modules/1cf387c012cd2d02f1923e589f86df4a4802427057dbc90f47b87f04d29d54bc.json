@@ -3,26 +3,23 @@
   "module": "frontend",
   "truths": [
     {
-      "statement": "API._postStream reads fetch ReadableStream bytes with TextDecoder streaming mode, handles split UTF-8 and SSE frame boundaries, parses JSON data frames, accumulates text, calls onText incrementally, and propagates AbortSignal."
+      "statement": "Fresh startup contains no demo data or bundled model. A user creates an empty independent local space, configures their own OpenAI-compatible model, then creates ideas."
     },
     {
-      "statement": "The browser AI adapter sends stream:true only for non-JSON chat calls with onText, preserving JSON-mode and action-based model routing for ask/angle/collide/name/rewrite flows."
+      "statement": "IndexedDB stores all space content and model keys on the current device. Navigation-only changes do not create revisions; atomic local revisions protect against concurrent-window overwrites and drafts remain in sessionStorage."
     },
     {
-      "statement": "Existing ask/angle/collide and rewrite UI callbacks update visible prompt/redraft text as streaming deltas arrive; cancelling uses AbortController and does not persist partial generated questions."
+      "statement": "Model calls go directly to the configured provider with CORS, omitted cookies, no referrer and no redirects. No frontend /api calls or implicit server model fallback exist."
     },
     {
-      "statement": "Demo and private local storage namespaces are isolated. Private state loads only after session verification; logout clears rendered private content and preserves unsynced drafts."
+      "statement": "Settings use explicit model saves/tests, default and per-action model selection, local JSONL import/export and responsive light/dark layouts. Plain exports redact keys; encrypted exports include them."
     },
     {
-      "statement": "Captured sync snapshots queue edits during requests and use a baseline/local/remote comparison for explicit conflict resolution."
-    },
-    {
-      "statement": "Streaming truncation is an error. Blob exports, validated imports, editable graph settings and optional semantic recall are available."
+      "statement": "Lexical bridges and paths are calculated in local_graph.js without uploading documents. The historical Python graph benchmark is not a performance claim for this browser implementation."
     }
   ],
   "dont_assume": [
-    "Do not stream JSON-mode model calls unless the JSON parser path is redesigned.",
-    "Do not save a generated prompt until streaming completes and live.loading has been replaced with a final prompt."
+    "Do not treat local persistence as offline inference: remote model requests send selected text to the user-chosen provider.",
+    "Do not delete or silently import legacy user data."
   ]
 }

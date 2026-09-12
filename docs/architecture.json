@@ -1,177 +1,158 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
-  "title": "Ideas project architecture",
+  "title": "Ideas browser-local workspace",
+  "storage_owner": "current-device browser",
+  "builtin_models": [],
+  "default_space": "empty user-created space",
   "modules": [
     {
       "id": "frontend",
       "path": "web",
-      "responsibility": "Demo/private workspace, local drafts, conflict UI and streamed prompts"
+      "role": "space lifecycle, local atomic storage, direct user model transport, settings, local graph and transfer"
     },
     {
       "id": "backend",
       "path": "yang",
-      "responsibility": "Auth, revision sync, model proxy, exact lexical graph and opt-in semantic recall"
+      "role": "legacy CLI/backend retained for explicit migration and regression; unused by current web app"
     },
     {
       "id": "qa",
       "path": "tests",
-      "responsibility": "Business, security, streaming, sync, crypto and browser acceptance"
+      "role": "legacy backend regressions plus local browser and direct-model contracts"
     },
     {
       "id": "ops",
       "path": ".",
-      "responsibility": "Reproducible build, isolated deployment, rollback and evidence"
+      "role": "single-file build and static hosting configuration"
     }
   ],
   "nodes": [
     {
-      "id": "workspace",
+      "id": "space",
       "source": "web/src/09_boot.js"
     },
     {
-      "id": "sync-client",
+      "id": "local-store",
+      "source": "web/src/02_db.js"
+    },
+    {
+      "id": "model-transport",
       "source": "web/src/03_api.js"
     },
     {
-      "id": "http",
-      "source": "yang/server.py"
+      "id": "model-actions",
+      "source": "web/src/04_agent.js"
     },
     {
-      "id": "auth",
-      "source": "yang/auth.py"
-    },
-    {
-      "id": "sync",
-      "source": "yang/sync.py"
-    },
-    {
-      "id": "store",
-      "source": "yang/store.py"
+      "id": "settings",
+      "source": "web/src/07_data.js"
     },
     {
       "id": "graph",
-      "source": "yang/graph_engine.py"
+      "source": "web/src/local_graph.js"
     },
     {
-      "id": "normalizer",
-      "source": "yang/quality.py"
+      "id": "transfer",
+      "source": "web/src/yangdata.js"
     },
     {
-      "id": "semantic",
-      "source": "yang/semantic.py"
-    },
-    {
-      "id": "model",
-      "source": "yang/chat.py"
+      "id": "static-host",
+      "source": "deploy/ides.service"
     }
   ],
   "edges": [
     {
-      "source": "workspace",
-      "target": "auth",
-      "kind": "login"
+      "source": "static-host",
+      "target": "space",
+      "action": "distribute static page"
     },
     {
-      "source": "workspace",
-      "target": "sync-client",
-      "kind": "persist"
+      "source": "space",
+      "target": "local-store",
+      "action": "open independent space"
     },
     {
-      "source": "sync-client",
-      "target": "http",
-      "kind": "HTTP JSON/SSE"
+      "source": "settings",
+      "target": "local-store",
+      "action": "explicit configuration save"
     },
     {
-      "source": "http",
-      "target": "auth",
-      "kind": "authorize"
+      "source": "model-actions",
+      "target": "model-transport",
+      "action": "user-initiated direct provider request"
     },
     {
-      "source": "http",
-      "target": "sync",
-      "kind": "atomic mutation"
+      "source": "model-actions",
+      "target": "local-store",
+      "action": "persist user-approved answers"
     },
     {
-      "source": "sync",
-      "target": "store",
-      "kind": "revision transaction"
-    },
-    {
-      "source": "store",
-      "target": "graph",
-      "kind": "incremental documents"
+      "source": "settings",
+      "target": "transfer",
+      "action": "validate import / export JSONL"
     },
     {
       "source": "graph",
-      "target": "normalizer",
-      "kind": "alias/evidence"
-    },
-    {
-      "source": "http",
-      "target": "model",
-      "kind": "authenticated SSE"
-    },
-    {
-      "source": "http",
-      "target": "semantic",
-      "kind": "explicit recall"
+      "target": "local-store",
+      "action": "read local documents only"
     }
   ],
   "data_stores": [
     {
-      "id": "sqlite",
-      "private": true,
-      "location": "/var/lib/ides/yang.db",
-      "entities": [
+      "id": "space-index",
+      "engine": "localStorage",
+      "key": "yang.spaces.v3"
+    },
+    {
+      "id": "space-records",
+      "engine": "IndexedDB",
+      "key": "yang.space.v3.<id>",
+      "contains": [
+        "space",
         "ideas",
-        "grew",
         "sparks",
         "cold",
-        "conf",
-        "revision",
-        "doc_terms",
-        "embeddings_cache"
+        "model configuration and keys",
+        "revision"
       ]
     },
     {
-      "id": "demo-browser",
-      "private": false,
-      "namespace": "yang.demo.v2"
-    },
-    {
-      "id": "owner-browser",
-      "private": true,
-      "namespace": "yang.private.v2",
-      "secrets_persisted": false
+      "id": "unsaved-draft",
+      "engine": "sessionStorage",
+      "key": "yang.draft.<id>"
     }
   ],
   "flows": {
-    "sync": [
-      "capture acknowledged base",
-      "diff current records",
-      "POST base_revision/upsert/delete",
-      "BEGIN IMMEDIATE",
-      "validate revision and complete state",
-      "commit or 409 without writes",
-      "queue edits received during request"
+    "onboarding": [
+      "create empty personal space",
+      "configure user-owned model",
+      "optional explicit connection test",
+      "save model locally",
+      "build ideas",
+      "export backup or import validated data"
     ],
-    "graph": [
-      "collect source documents",
-      "normalize aliases",
-      "update changed n-gram statistics",
-      "select entities",
-      "retokenize affected documents",
-      "rescore exact global IDF",
-      "reuse pair topology and update weights",
-      "preserve original evidence"
+    "persistence": [
+      "capture local state",
+      "skip navigation-only changes",
+      "queue during in-flight write",
+      "check IndexedDB revision in readwrite transaction",
+      "commit or preserve draft with conflict prompt"
     ],
-    "privacy": [
-      "public health is redacted",
-      "session check before private state",
-      "demo data never automatically merges into owner data",
-      "logout clears rendered private views",
-      "unsynced draft remains in private namespace"
+    "model": [
+      "select user default or action model",
+      "validate URL and model ID",
+      "send direct CORS request without cookies",
+      "parse JSON or SSE",
+      "show cancellation/errors without built-in fallback"
     ]
+  },
+  "privacy": {
+    "application_api_calls": false,
+    "data_persisted_on_application_server": false,
+    "model_requests": "relevant content sent only to user-configured provider on explicit operation",
+    "plain_export_keys": false,
+    "encrypted_export_keys": true,
+    "legacy_data": "retained; import is explicit"
   }
 }

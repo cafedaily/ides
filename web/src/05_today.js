@@ -3,6 +3,7 @@
 const VIEWS = ["today","list","one","stars","data","new","why"];
 const NAVED = { today:1, list:1, stars:1, data:1 };
 function render(){
+  if(!S.space){renderWelcome();return;}
   ({ today:vToday, list:vList, one:vOne, stars:vStars, data:renderData, new:vNew, why:vWhy })[S.v]();
 }
 function go(v,id){
@@ -29,7 +30,7 @@ function empty(host,msg,btn,fn){
 function modelName(kind){
   const c=S.conf||{}, id=(c.route||{})[kind];
   const m=(c.models||[]).find(x=>x.id===id);
-  return m ? m.name : "Claude";
+  return m ? m.name : (selectedModel()?.name||"未配置模型");
 }
 
 /* ================== 今天 ================== */
@@ -80,7 +81,7 @@ function vToday(){
     ab.disabled=picking;
     ab.addEventListener("click",async ()=>{
       picking=true; vToday();
-      let p=null; try{ p=await agPick(); }catch(e){}
+      let p=null; try{ p=await agPick(); }catch(e){showToast(e.message||"模型请求失败，请重试。",true);}
       picking=false;
       if(p){ S.today={ day:today(), id:p.id, why:p.why, by:"ai" }; save(); }
       if(S.v==="today") vToday();
@@ -207,10 +208,11 @@ function listSpark(r){
 }
 async function grow(k){
   const epoch=workspaceEpoch;
+  if(!requireModel())return;
   shaping=k.id; vList();
   let sh;
   try{ sh = await agShape(k.text); }
-  catch(e){ sh = { title:k.text.slice(0,14), seed:k.text, first:pick(ASK,[]) }; }
+  catch(e){if(epoch!==workspaceEpoch)return;shaping=null;vList();showToast(e.message,true);return;}
   shaping=null;
   const n={ id:uid(), title:sh.title, seed:sh.seed, now:"", grew:[], created:Date.now() };
   if(epoch!==workspaceEpoch) return;

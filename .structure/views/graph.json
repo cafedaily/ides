@@ -39,30 +39,15 @@
         "module": "backend",
         "truths": [
           {
-            "statement": "POST /api/chat with body stream:true is handled by the HTTP server after private-route authentication and same-origin mutation checks, returning text/event-stream with no-store, X-Accel-Buffering:no and flushed JSON SSE events."
+            "statement": "Legacy Python API and CLI remain available as explicit migration and regression tools; the current browser application does not call them."
           },
           {
-            "statement": "Chat upstream requests are OpenAI-compatible; non-stream requests remain buffered JSON responses, while stream requests send stream:true upstream and relay upstream SSE deltas incrementally as {type:\"delta\",text}, {type:\"done\"}, or sanitized {type:\"error\",error}."
-          },
-          {
-            "statement": "Chat request validation rejects malformed messages, unsupported roles and bad numeric parameters before contacting upstream; upstream keys and raw upstream/internal errors are not returned to clients."
-          },
-          {
-            "statement": "Production auth policy always uses Secure session cookies even if YANG_AUTH_SECURE_COOKIE=0; unsupported Transfer-Encoding and invalid Content-Length/body framing are rejected and the connection is closed."
-          },
-          {
-            "statement": "Revision-based POST /api/sync validates and commits all changes atomically; stale revisions return 409 with no mutation."
-          },
-          {
-            "statement": "GraphCache maintains exact incremental lexical results; aliases preserve source evidence. Optional semantic recall is explicit and disabled by default."
-          },
-          {
-            "statement": "Public health cannot authorize private routes. Model keys are redacted from state and plain exports; encrypted export passwords use POST."
+            "statement": "No historical server-side model configuration is inherited by a newly created local browser space."
           }
         ],
         "dont_assume": [
-          "Do not expose model API keys or raw upstream error bodies.",
-          "Do not assume streaming routes may skip authentication or origin checks."
+          "Do not treat local persistence as offline inference: remote model requests send selected text to the user-chosen provider.",
+          "Do not delete or silently import legacy user data."
         ]
       },
       "source": ".structure/modules/10e08a419e850eba1ebba18fdd28eb7ec1b7e8baa9bcc3b973e2b8891ec726be.json"
@@ -91,27 +76,24 @@
         "module": "frontend",
         "truths": [
           {
-            "statement": "API._postStream reads fetch ReadableStream bytes with TextDecoder streaming mode, handles split UTF-8 and SSE frame boundaries, parses JSON data frames, accumulates text, calls onText incrementally, and propagates AbortSignal."
+            "statement": "Fresh startup contains no demo data or bundled model. A user creates an empty independent local space, configures their own OpenAI-compatible model, then creates ideas."
           },
           {
-            "statement": "The browser AI adapter sends stream:true only for non-JSON chat calls with onText, preserving JSON-mode and action-based model routing for ask/angle/collide/name/rewrite flows."
+            "statement": "IndexedDB stores all space content and model keys on the current device. Navigation-only changes do not create revisions; atomic local revisions protect against concurrent-window overwrites and drafts remain in sessionStorage."
           },
           {
-            "statement": "Existing ask/angle/collide and rewrite UI callbacks update visible prompt/redraft text as streaming deltas arrive; cancelling uses AbortController and does not persist partial generated questions."
+            "statement": "Model calls go directly to the configured provider with CORS, omitted cookies, no referrer and no redirects. No frontend /api calls or implicit server model fallback exist."
           },
           {
-            "statement": "Demo and private local storage namespaces are isolated. Private state loads only after session verification; logout clears rendered private content and preserves unsynced drafts."
+            "statement": "Settings use explicit model saves/tests, default and per-action model selection, local JSONL import/export and responsive light/dark layouts. Plain exports redact keys; encrypted exports include them."
           },
           {
-            "statement": "Captured sync snapshots queue edits during requests and use a baseline/local/remote comparison for explicit conflict resolution."
-          },
-          {
-            "statement": "Streaming truncation is an error. Blob exports, validated imports, editable graph settings and optional semantic recall are available."
+            "statement": "Lexical bridges and paths are calculated in local_graph.js without uploading documents. The historical Python graph benchmark is not a performance claim for this browser implementation."
           }
         ],
         "dont_assume": [
-          "Do not stream JSON-mode model calls unless the JSON parser path is redesigned.",
-          "Do not save a generated prompt until streaming completes and live.loading has been replaced with a final prompt."
+          "Do not treat local persistence as offline inference: remote model requests send selected text to the user-chosen provider.",
+          "Do not delete or silently import legacy user data."
         ]
       },
       "source": ".structure/modules/1cf387c012cd2d02f1923e589f86df4a4802427057dbc90f47b87f04d29d54bc.json"
@@ -141,30 +123,15 @@
         "module": "qa",
         "truths": [
           {
-            "statement": "tests/test_streaming.py uses ephemeral-port HTTP servers to prove the first downstream SSE delta arrives before a controlled upstream completion barrier is released."
+            "statement": "128 regression tests pass, including encrypted Python/JavaScript format interoperability and the new direct-model/local-graph contracts."
           },
           {
-            "statement": "Streaming regressions cover real server /api/chat SSE headers, upstream stream:true payloads, auth/origin rejection before upstream contact, invalid input, malformed upstream frames and sanitized upstream error frames."
-          },
-          {
-            "statement": "Security regressions cover production Secure-cookie override hardening, unsupported Transfer-Encoding rejection, invalid Content-Length rejection and connection-close behavior after framing errors."
-          },
-          {
-            "statement": "Required validation runners passed: project-tests reported 117 passed and 0 failed; web-syntax reported Web source syntax and top-level symbols passed."
-          },
-          {
-            "statement": "128 Python tests passed including encrypted Python/JavaScript interoperability, sync atomicity, graph equivalence, security and upstream SSE."
-          },
-          {
-            "statement": "Browser fixtures use synthetic credentials and a local mock model; actual real-model development is documented separately."
-          },
-          {
-            "statement": "300/500-document store/API benchmark passed below 30% of full recomputation with exact output equality."
+            "statement": "The local browser fixture serves static HTML and an explicit synthetic CORS model. Tests verify no application API requests, empty onboarding, local persistence, model errors, streaming/cancel, import/export, multiple spaces, window conflicts, offline capture and responsive themes."
           }
         ],
         "dont_assume": [
-          "An incidental socket reset traceback during the connection-close regression is not a test failure when project-tests exits 0.",
-          "Do not count subagent isolated changes as applied unless explicitly accepted; the worker result was inspected and discarded in favor of parent-integrated changes."
+          "Do not treat local persistence as offline inference: remote model requests send selected text to the user-chosen provider.",
+          "Do not delete or silently import legacy user data."
         ]
       },
       "source": ".structure/modules/3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392.json"
@@ -207,23 +174,16 @@
         "module": "ops",
         "truths": [
           {
-            "statement": "Deployment isolates code releases under /opt/ides and persistent data under /var/lib/ides. Root-only production environment provides the token."
+            "statement": "The current deployment configuration serves only dist through a loopback static HTTP server; it no longer loads the legacy model environment file or exposes application database endpoints."
           },
           {
-            "statement": "Structured architecture, browser evidence and graph benchmark are in docs. Deployment status is tracked separately from development completion."
-          },
-          {
-            "statement": "Git text files use LF so source archives execute correctly on Linux even when built on Windows."
-          },
-          {
-            "statement": "ideas.cafedaily.top has verified HTTPS, private login, revision conflicts, AES-GCM export and a real upstream SSE call. Source is public at cafedaily/ides; private data and tokens remain outside Git."
+            "statement": "Legacy browser namespaces and server databases are retained for explicit migration. Current architecture and local acceptance data are recorded in docs/architecture.json and docs/local-space-validation.json."
           }
         ],
         "dont_assume": [
-          "Module IDs are not source paths.",
-          "User data and model credentials live outside this repository."
-        ],
-        "notes": "Fresh state for the user-authorized 0.2.1 development and deployment goal."
+          "Do not treat local persistence as offline inference: remote model requests send selected text to the user-chosen provider.",
+          "Do not delete or silently import legacy user data."
+        ]
       },
       "source": ".structure/modules/a92c36e66a25ee99ff862faa8e87987be6c7cd13c3ee661c400a45b0f1e3b132.json"
     },
@@ -418,6 +378,45 @@
       }
     },
     {
+      "id": "work:DEV-local-space",
+      "type": "work_item",
+      "label": "Local personal space with user-owned models and guided settings",
+      "data": {
+        "schema_version": 2,
+        "title": "Local personal space with user-owned models and guided settings",
+        "kind": "feature",
+        "impact": "interface",
+        "modules": [
+          "backend",
+          "frontend",
+          "qa",
+          "ops"
+        ],
+        "scope": [
+          "yang/**",
+          "web/**",
+          "tests/**",
+          "scripts/**",
+          "docs/**",
+          "deploy/**",
+          "README.md"
+        ],
+        "acceptance": [
+          "Fresh startup creates an empty personal space with no demo or built-in model",
+          "Ideas and user model configuration persist locally with no application-server synchronization",
+          "User configures and tests their own model before AI-assisted idea workflows",
+          "Accessible responsive settings and local import/export pass browser regression"
+        ],
+        "id": "DEV-local-space",
+        "project_id": "6d169e87-c824-4870-9b6e-7797fbf86ef8",
+        "state": "done",
+        "created_at": "2026-09-12T02:38:37.025434+00:00",
+        "updated_at": "2026-09-12T02:52:05.901716+00:00",
+        "managed_by": "pi-development-harness",
+        "checkout_id": "c8d874e86cbda946b654117b43fdf70b24cb8a73858c2622d7bdebe8402525c8"
+      }
+    },
+    {
       "id": "work:DEV-deployment-portability",
       "type": "work_item",
       "label": "Preserve portable line endings in Git source archives",
@@ -577,6 +576,30 @@
       "id": "57326cb0ec1a5a7ab1d4fefda79767b8327300e8dbe5a08804592b84192bc6dd",
       "source": "work:DEV-4e0ca6f5e5ca",
       "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "1e1361814fd71b655d173493e22fe2a20028ba3eb6c880c37361e824efb675bb",
+      "source": "work:DEV-local-space",
+      "target": "module:backend",
+      "type": "affects"
+    },
+    {
+      "id": "dbe6f7df8fddbccaa3113f2707bf02976ff1a7e73c0c810b7419682be618c1fb",
+      "source": "work:DEV-local-space",
+      "target": "module:frontend",
+      "type": "affects"
+    },
+    {
+      "id": "8bcb478132a8e362f2b6add9601554c3fe1a6c70abad86f73a0ac677057df57d",
+      "source": "work:DEV-local-space",
+      "target": "module:qa",
+      "type": "affects"
+    },
+    {
+      "id": "8c558d0a9d3c613f82b25110e1b6a574fe3e18a41ce316a45b0e1ee065f49edc",
+      "source": "work:DEV-local-space",
+      "target": "module:ops",
       "type": "affects"
     },
     {

@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "storage": "browser-local",
+  "model_fixture": "explicit synthetic CORS endpoint",
+  "application_api_requests": 0,
+  "checks": [
+    "Empty local onboarding with no demo, built-in model or application API traffic",
+    "Explicit user model setup, validation, CORS connection test and recoverable authentication error",
+    "Workspace and user model configuration persist in device IndexedDB after reload",
+    "User model shapes ideas, streams follow-up questions, saves answers locally and cancels",
+    "Local plain/encrypted downloads, wrong-password recovery, validated import and key exclusion",
+    "Multiple independent local spaces and explicit switching preserve existing content",
+    "Concurrent tabs surface save conflict and preserve unsaved local draft",
+    "Offline idea capture saves without an application server",
+    "Responsive settings verified on desktop, 375px mobile, landscape and dark reduced-motion mode"
+  ],
+  "errors": [],
+  "regression_suite": "python tests/run.py",
+  "scope": "browser-local product revision; legacy server regressions retained",
+  "deployment_status": "not-deployed-by-this-evidence",
+  "regression_passed": 128,
+  "regression_failed": 0
+}

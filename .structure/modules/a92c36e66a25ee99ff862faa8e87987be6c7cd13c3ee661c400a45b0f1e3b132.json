@@ -3,21 +3,14 @@
   "module": "ops",
   "truths": [
     {
-      "statement": "Deployment isolates code releases under /opt/ides and persistent data under /var/lib/ides. Root-only production environment provides the token."
+      "statement": "The current deployment configuration serves only dist through a loopback static HTTP server; it no longer loads the legacy model environment file or exposes application database endpoints."
     },
     {
-      "statement": "Structured architecture, browser evidence and graph benchmark are in docs. Deployment status is tracked separately from development completion."
-    },
-    {
-      "statement": "Git text files use LF so source archives execute correctly on Linux even when built on Windows."
-    },
-    {
-      "statement": "ideas.cafedaily.top has verified HTTPS, private login, revision conflicts, AES-GCM export and a real upstream SSE call. Source is public at cafedaily/ides; private data and tokens remain outside Git."
+      "statement": "Legacy browser namespaces and server databases are retained for explicit migration. Current architecture and local acceptance data are recorded in docs/architecture.json and docs/local-space-validation.json."
     }
   ],
   "dont_assume": [
-    "Module IDs are not source paths.",
-    "User data and model credentials live outside this repository."
-  ],
-  "notes": "Fresh state for the user-authorized 0.2.1 development and deployment goal."
+    "Do not treat local persistence as offline inference: remote model requests send selected text to the user-chosen provider.",
+    "Do not delete or silently import legacy user data."
+  ]
 }

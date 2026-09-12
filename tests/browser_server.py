@@ -1,41 +1,43 @@
-"""Synthetic local fixture. Never reads the operator's DB or API keys."""
+"""Static app and explicit synthetic CORS model for browser acceptance."""
+import functools
 import json
 from pathlib import Path
-import sys
-import tempfile
 import threading
 import time
-from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from yang import auth,db,demo,server,store
+from http.server import BaseHTTPRequestHandler,SimpleHTTPRequestHandler,ThreadingHTTPServer
 
 class Model(BaseHTTPRequestHandler):
     def log_message(self,*args): pass
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin','*')
+        self.send_header('Access-Control-Allow-Headers','Content-Type, Authorization')
+        self.send_header('Access-Control-Allow-Methods','POST, OPTIONS')
+        super().end_headers()
+    def do_OPTIONS(self):
+        self.send_response(204);self.end_headers()
     def do_POST(self):
         body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+        if self.headers.get('Authorization')!='Bearer SYNTHETIC_LOCAL_KEY':
+            self.send_response(401);self.end_headers();return
         if body.get('stream'):
             self.send_response(200);self.send_header('Content-Type','text/event-stream');self.end_headers()
             try:
-                for text in ['具体说说，','谁会第一个用它？']:
-                    self.wfile.write(('data: '+json.dumps({'choices':[{'delta':{'content':text}}]})+'\n\n').encode());self.wfile.flush();time.sleep(.2)
+                for text in ['你的模型在追问：','谁最需要这个想法？']:
+                    self.wfile.write(('data: '+json.dumps({'choices':[{'delta':{'content':text}}]})+'\n\n').encode());self.wfile.flush();time.sleep(.15)
                 self.wfile.write(b'data: [DONE]\n\n')
-            except (BrokenPipeError,ConnectionResetError):pass
+            except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError):pass
             return
-        text='浏览器验收想法'
+        text='自己的模型起的名字'
         if body.get('response_format'):
             prompt=body['messages'][-1]['content']
-            text=json.dumps({'dirs':[{'title':'分叉方向','seed':'新的角度'}]} if 'dirs' in prompt else {'title':text,'seed':'测试念头','first':'谁会用它？'},ensure_ascii=False)
+            text=json.dumps({'dirs':[{'title':'换一个方向','why':'从更小的需求出发'}]} if 'dirs' in prompt else {'title':text,'seed':'本机念头','first':'你的第一个用户是谁？'},ensure_ascii=False)
         raw=json.dumps({'choices':[{'message':{'content':text}}]}).encode()
         self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
 
-with tempfile.TemporaryDirectory(prefix='yang-browser-') as directory:
-    upstream=ThreadingHTTPServer(('127.0.0.1',0),Model)
-    threading.Thread(target=upstream.serve_forever,daemon=True).start()
-    file=Path(directory)/'browser.db';c=db.connect(file);st=demo.state();st['ideas'][0]['title']='OWNER_PRIVATE'
-    st['conf']={'models':[{'id':'mock','name':'Synthetic fixture','base':f'http://127.0.0.1:{upstream.server_port}/v1','model':'test','key':'SYNTHETIC_KEY_ONLY'}],'route':{}}
-    store.load_state(c,st);c.close()
-    policy=auth.AuthPolicy(token='BROWSER_SYNTHETIC_TOKEN_0123456789abcdef',production=False,public_origin=None,secure_cookie=False)
-    handler=server.make(file,Path(__file__).resolve().parents[1]/'dist',policy=policy)
-    app=ThreadingHTTPServer(('127.0.0.1',0),handler)
-    print(json.dumps({'url':f'http://127.0.0.1:{app.server_port}'}),flush=True)
-    app.serve_forever()
+upstream=ThreadingHTTPServer(('127.0.0.1',0),Model)
+threading.Thread(target=upstream.serve_forever,daemon=True).start()
+class Static(SimpleHTTPRequestHandler):
+    def log_message(self,*args):pass
+app=ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Static,directory=str(Path(__file__).resolve().parents[1]/'dist')))
+print(json.dumps({'url':f'http://127.0.0.1:{app.server_port}','model_url':f'http://127.0.0.1:{upstream.server_port}/v1'}),flush=True)
+app.serve_forever()

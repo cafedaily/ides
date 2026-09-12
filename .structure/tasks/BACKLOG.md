@@ -22,4 +22,5 @@ Plan modules backend, frontend, qa; scope yang/chat.py, yang/server.py, yang/aut
 
 Acceptance:
 1. POST /api/chat with stream=true forwards stream=true to the selected O
+- DEV-local-space [done]: Local personal space with user-owned models and guided settings
 - DEV-deployment-portability [done]: Preserve portable line endings in Git source archives

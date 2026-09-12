@@ -14,12 +14,13 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "src")
 
-CSS = ["app.css", "extra.css", "graph.css"]
+CSS = ["app.css", "extra.css", "graph.css", "settings.css"]
 JS = [
     "yangdata.js",     # 导出格式 —— 和 yang/jsonl.py 必须同步改
     "01_state.js",     # 状态、工具、语音
     "02_db.js",        # IndexedDB
     "03_api.js",       # 后端（可选）
+    "local_graph.js",
     "04_agent.js",     # 智能体
     "05_today.js",     # 今天 / 想法 / 念头 / 凉了的
     "06_idea.js",      # 一个想法
@@ -66,8 +67,6 @@ def main(destination=None):
     out = ('<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
            '<meta name="viewport" content="width=device-width,initial-scale=1,'
            'viewport-fit=cover">\n<title>养想法</title>\n'
-           '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
-           'family=ZCOOL+XiaoWei&family=Noto+Sans+SC:wght@300;400;500&display=swap">\n'
            '<style>\n' + css + '\n</style>\n</head>\n<body>\n' + body +
            '\n<script>\n"use strict";\n' + js + '\n</script>\n</body>\n</html>\n')
     dst = destination or os.path.join(HERE, "index.html")

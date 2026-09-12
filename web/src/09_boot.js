@@ -55,7 +55,7 @@ function vWhy(){
       const v=ta.value.trim(); if(!v){ ta.focus(); return; }
       chilling={loading:true,push:"",asked:false}; vWhy();
       document.getElementById("whyta").value=v;
-      let t=null; try{ t=await agChill(it,v); }catch(e){}
+      let t=null; try{ t=await agChill(it,v); }catch(e){showToast(e.message,true);}
       chilling={loading:false,push:t||"",asked:true};
       if(S.v==="why"){ vWhy(); const x=document.getElementById("whyta"); if(x) x.value=v; }
     });
@@ -84,112 +84,57 @@ function finishChill(it,ta){
 }
 
 function foot(){
-  const f=el("div","foot");
-  f.appendChild(document.createTextNode(
-    SPACE==="private" ? "私有空间。修改先保存在浏览器，再同步到服务端。" : "演示内容存在当前浏览器，不上传。"));
-  f.appendChild(document.createElement("br"));
-  const b=el("button",null,"导出、导入、模型 →"); b.type="button";
-  b.addEventListener("click",()=>go("data"));
-  f.appendChild(b);
-  return f;
+  const f=el("div","foot");f.appendChild(el("p",null,"想法保存在当前设备，随时可以导出带走。"));
+  const b=el("button",null,"空间设置与数据备份");b.onclick=()=>go("data");f.appendChild(b);return f;
 }
-
-/* ================== 启动 ================== */
-(function buildNav(){
-  const nv=document.getElementById("nav");
-  [["today","今天","today"],["list","想法","ideas"],["stars","图谱","stars"],["data","数据","data"]]
-    .forEach(([k,n,ic])=>{
-      const b=el("button"); b.type="button"; b.dataset.v=k; b.setAttribute("aria-selected","false");
-      b.appendChild(svgIcon(IC[ic],21)); b.appendChild(el("span",null,n));
-      b.addEventListener("click",()=>go(k));
-      nv.appendChild(b);
-    });
-})();
-document.getElementById("fab").addEventListener("click",()=>go("new"));
-
 let workspaceEpoch=0;
 function paintSession(){
-  const host=document.getElementById("session-status"); if(!host) return;
-  host.textContent="";
-  const text=SPACE==="private" ? (SYNC.error || (SYNC.conflict ? "发现同步冲突，本机修改已保留" : SYNC.dirty || SYNC.running ? "正在保存修改" : "已登录 · 已保存")) : "本地演示 · 登录后进入自己的空间";
-  host.appendChild(el("span",null,text));
-  if(SPACE==="private"){
-    const retry=el("button",null,"重试同步"); retry.onclick=()=>{SYNC.error="";syncUp();};
-    if(SYNC.error) host.appendChild(retry);
-    const out=el("button",null,"退出登录"); out.onclick=async()=>{
-      await flushSync();
-      try{ await API._post("/api/logout",{}); API.on=false; await enterDemo(); }
-      catch(e){ SYNC.error="退出失败，请重试："+e.message; paintSession(); }
-    }; host.appendChild(out);
-    if(SYNC.conflict){
-      host.appendChild(el("span",null,"冲突项："+SYNC.conflict.conflicts.join("、")));
-      for(const [choice,label] of [["local","冲突项保留本机版本"],["remote","冲突项保留服务端版本"]]){
-        const b=el("button",null,label); b.onclick=()=>resolveSync(choice); host.appendChild(b);
-      }
-    }
-  }else{
-    const login=el("button",null,"登录自己的空间"); login.onclick=showLogin; host.appendChild(login);
+  const host=document.getElementById("session-status");if(!host)return;host.textContent="";
+  if(!S.space)return;
+  const name=el("button","space-switch",S.space.name);name.onclick=()=>{settingsTab="space";go("data");};host.appendChild(name);
+  const status=el("span","save-state",DB.why || (DB.pending||DB.writing?"正在保存到本机":"已保存到本机"));
+  status.setAttribute("role","status");host.appendChild(status);
+  if(DB.conflict){for(const [choice,label] of [["local","保留此窗口版本"],["remote","载入另一窗口版本"]]){
+    const b=el("button",null,label);b.onclick=()=>resolveLocalConflict(choice);host.appendChild(b);
+  }}else if(DB.why){const retry=el("button",null,"重试保存");retry.onclick=()=>dbWrite();host.appendChild(retry);}
+}
+function showToast(text,error=false){
+  const old=document.getElementById("toast");if(old)old.remove();
+  const note=el("div","toast"+(error?" error":""),text);note.id="toast";note.setAttribute("role",error?"alert":"status");
+  document.body.appendChild(note);setTimeout(()=>note.remove(),7000);
+}
+async function switchSpace(id){
+  if(hasModelDraftChanges()&&!confirm("模型配置尚未保存。放弃这些修改并切换空间？"))return;
+  await dbWrite();await openLocalSpace(id);workspaceEpoch++;for(const controller of MODEL_REQUESTS)controller.abort();
+  stopLive();live=null;forks=null;redraft=null;GV.bridges=null;GV.path=null;
+  modelDraft=null;settingsNotice="";S.v="today";S.cur=null;_initAI();go("today");paintSession();
+}
+function renderWelcome(){
+  document.querySelectorAll(".view").forEach(view=>view.classList.remove("on"));
+  const root=document.getElementById("v-today");root.classList.add("on");root.textContent="";
+  document.getElementById("nav").hidden=true;document.getElementById("fab").hidden=true;
+  root.appendChild(el("p","eyebrow","一个只属于你的起点"));
+  root.appendChild(el("h1","welcome-title","给想法留一个空间"));
+  root.appendChild(el("p","lede","从空白开始，用你选择的模型，把一闪而过的念头慢慢养成形。"));
+  const flow=el("ol","setup-flow");for(const text of ["创建自己的空间","连接自己的模型","记下第一个想法","导出备份，随时带走"])flow.appendChild(el("li",null,text));root.appendChild(flow);
+  const form=el("form","welcome-form");const label=el("label",null,"空间名称");label.htmlFor="space-name";form.appendChild(label);
+  const input=el("input");input.id="space-name";input.placeholder="例如：我的创作笔记";input.maxLength=60;input.required=true;input.autocomplete="off";form.appendChild(input);
+  const error=el("p","error-message");error.setAttribute("role","alert");form.appendChild(error);
+  const button=el("button","main","创建我的空间");button.type="submit";form.appendChild(button);
+  form.onsubmit=async event=>{event.preventDefault();button.disabled=true;try{await createSpace(input.value);document.getElementById("nav").hidden=false;document.getElementById("fab").hidden=false;settingsTab="models";settingsNotice="空间已创建。接下来连接你自己的模型。";_initAI();go("data");paintSession();}catch(e){error.textContent=e.message;}finally{button.disabled=false;}};
+  root.appendChild(form);root.appendChild(el("p","privacy-note","空间、想法与配置只保存在当前浏览器。只有调用模型时，相关内容才会发送给你选择的服务。"));
+}
+(function buildNav(){
+  const nav=document.getElementById("nav");
+  for(const [id,label,icon] of [["today","今天","today"],["list","想法","ideas"],["stars","图谱","stars"],["data","设置","data"]]){
+    const b=el("button");b.type="button";b.dataset.v=id;b.appendChild(svgIcon(IC[icon],21));b.appendChild(el("span",null,label));b.onclick=()=>go(id);nav.appendChild(b);
   }
-}
-function showLogin(){
-  const old=document.getElementById("login-dialog"); if(old) old.remove();
-  const dialog=el("dialog","login-dialog"); dialog.id="login-dialog";
-  const form=document.createElement("form");
-  const title=el("h2",null,"登录自己的空间"); title.id="login-title";
-  dialog.setAttribute("aria-labelledby",title.id); form.appendChild(title);
-  form.appendChild(el("p",null,"演示数据留在当前浏览器，不会合入你的私有空间。"));
-  const label=el("label",null,"访问口令"); label.htmlFor="login-token"; form.appendChild(label);
-  const input=document.createElement("input"); input.id="login-token"; input.type="password"; input.autocomplete="current-password"; input.required=true; form.appendChild(input);
-  const error=el("p","note"); error.setAttribute("role","alert"); form.appendChild(error);
-  const submit=el("button","main","登录"); submit.type="submit"; form.appendChild(submit);
-  const cancel=el("button",null,"继续演示"); cancel.type="button"; cancel.onclick=()=>dialog.close(); form.appendChild(cancel);
-  form.onsubmit=async event=>{
-    event.preventDefault(); submit.disabled=true; error.textContent="正在登录…";
-    try{ await API._post("/api/login",{token:input.value}); input.value=""; API.tried=false;
-      if(!await API.probe(true)) throw new Error(API.why);
-      await enterPrivate(); dialog.close();
-    }catch(e){ error.textContent=e.message; }finally{ submit.disabled=false; }
-  };
-  dialog.appendChild(form); document.body.appendChild(dialog); dialog.showModal(); input.focus();
-}
-async function chooseSpace(name){
-  workspaceEpoch++;
-  clearTimeout(wTimer); clearTimeout(pushT);
-  stopLive(); AI=null; live=null; forks=null; redraft=null; S.cur=null; GV.bridges=null; GV.path=null;
-  if(DB.h) DB.h.close(); DB.ok=false;
-  for(const view of document.querySelectorAll(".view")) view.textContent="";
-  patt={loading:false,text:"",err:""}; pair={loading:false,r:null,err:""}; chilling={loading:false,push:"",asked:false};
-  SPACE=name; LS="yang."+name+".v2"; DB.name=LS;
-  const cached=load();
-  S=cached || (name==="demo" ? seedState() : {ideas:[],sparks:[],cold:[],conf:defaultConf(),v:"today",tab:"live",cur:null,today:null});
-  const disk=await dbBoot();
-  if(!cached && disk && (disk.ideas.length || disk.sparks.length || disk.cold.length)) Object.assign(S,disk);
-  S.conf=Object.assign(defaultConf(),S.conf||{});
-  S.v="today"; S.cur=null;
-}
-async function enterDemo(){
-  if(SPACE==="private"){
-    try{ S.syncBase=SYNC.base; localStorage.setItem(LS,JSON.stringify(safeState(S))); }catch(e){}
-    await dbWrite();
-  }
-  SYNC.base=null; SYNC.conflict=null; SYNC.dirty=false;
-  await chooseSpace("demo"); save(); go("today"); paintSession();
-}
-async function enterPrivate(){
-  const remote=await API.pull();
-  await chooseSpace("private");
-  if(S.syncBase){
-    const merged=mergeThree(S.syncBase,payloadState(S),remote);
-    if(merged.conflicts.length){ SYNC.base=S.syncBase; SYNC.conflict={remote,conflicts:merged.conflicts}; }
-    else{ Object.assign(S,merged.state); SYNC.base=remote; SYNC.conflict=null; }
-  }else{ Object.assign(S,remote); SYNC.base=remote; SYNC.conflict=null; }
-  SYNC.error=""; save(); await _initAI(); go("today"); paintSession(); await flushSync();
-}
+})();
+document.getElementById("fab").onclick=()=>go("new");
 (async function boot(){
-  const host=el("div","session-status"); host.id="session-status"; host.setAttribute("aria-live","polite");
-  document.querySelector("header").appendChild(host);
+  const status=el("div","session-status");status.id="session-status";document.querySelector("header").appendChild(status);
   try{
-    if(await API.probe()) await enterPrivate();
-    else await enterDemo();
-  }catch(e){ API.why=e.message; await enterDemo(); }
+    const active=localStorage.getItem(ACTIVE_SPACE);if(active && spaceIndex.some(x=>x.id===active))await openLocalSpace(active);
+    if(S.space){_initAI();go("today");paintSession();if(DB.pending)await dbWrite();}else renderWelcome();
+  }catch(error){renderWelcome();showToast("读取空间失败："+error.message,true);}
 })();

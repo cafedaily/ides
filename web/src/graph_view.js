@@ -4,14 +4,15 @@
    这里换成三样能读的东西：
      · 圈图      —— 想法之间已经撞出来的线（本地就有）
      · 桥        —— 一个词把两个想法的**不同维度**串起来，并且贴出两边的原话
-     · 串一串    —— 挑两个八竿子打不着的，看后端能不能找出一条路
-   后端不在的时候只剩第一样，并且明说少了什么。 */
+     · 串一串    —— 挑两个八竿子打不着的，看本机词条分析能不能找出一条路
+   本机词条分析不在的时候只剩第一样，并且明说少了什么。 */
 
 let GV = { tab:"map", bridges:null, loading:"", err:"",
            pa:"", pb:"", path:null, terms:null };
 let pair = { loading:false, r:null, err:"" };
 
 async function doPair(){
+  if(!requireModel())return;
   pair={ loading:true, r:null, err:"" }; vStars();
   try{ const x=await agPair(); pair={ loading:false, r:x, err: x?"":"挑不出来。" }; }
   catch(e){ pair={ loading:false, r:null, err:"没挑成。可能是网络。" }; }
@@ -37,30 +38,7 @@ function vStars(){
     tabs.appendChild(b);
   });
   r.appendChild(tabs);
-  if(API.on && S.conf.embeddings?.enabled){
-    const semanticBox=el("div","card");
-    const select=el("select"); select.setAttribute("aria-label","语义召回起点");
-    S.ideas.forEach(i=>select.appendChild(new Option(i.title,i.id))); semanticBox.appendChild(select);
-    const query=el("button",null,"查找语义相关想法"); const output=el("div"); output.setAttribute("aria-live","polite");
-    query.onclick=async()=>{
-      query.disabled=true; output.textContent="正在获取语义候选…";
-      try{await flushSync(); if(SYNC.dirty || SYNC.conflict) throw new Error("请先完成同步。");
-        const result=await API._post("/api/semantic",{id:select.value}); output.textContent="";
-        if(!result.related.length) output.textContent="没有达到阈值的语义候选。";
-        for(const hit of result.related){
-          const item=el("p",null,hit.title+" · 语义相似度 "+hit.score+" · 共同词条："+(hit.lexical_terms.join("、")||"无")); output.appendChild(item);
-        }
-      }catch(e){output.textContent=e.message;}finally{query.disabled=false;}
-    }; semanticBox.appendChild(query);semanticBox.appendChild(output);r.appendChild(semanticBox);
-  }
 
-  if(!API.on){
-    const w = el("div","mini dash"); w.style.cursor="default";
-    const l = el("div","l");
-    l.appendChild(el("p","t","演示模式支持本地圈图"));
-    l.appendChild(el("p","m","登录自己的空间后，可使用词条证据桥和路径搜索。"));
-    w.appendChild(l); r.appendChild(w);
-  }
 
   if(GV.tab==="map") gvMap(r);
   else if(GV.tab==="bridge") gvBridge(r);
@@ -153,10 +131,7 @@ function dimLabel(a){ return (a||[]).map(d=>DIMN[d]||d).join(" · "); }
 function gvBridge(r){
   r.appendChild(el("p","lede","一个词，在这个想法里出现在一个地方，在另一个想法里出现在另一个地方。"+
     "跨得越远越值得看——尤其是一头在「为什么凉了」里。"));
-  if(!API.on){
-    r.appendChild(el("p","note2","登录自己的空间后，可以计算私有数据的关系。"));
-    return;
-  }
+
   const row=el("div","prow");
   const b=el("button","main", GV.loading==="bridge" ? "正在算…" : (GV.bridges?"再算一遍":"算一遍"));
   b.type="button"; b.disabled = GV.loading==="bridge";
@@ -200,7 +175,7 @@ function gvBridge(r){
 async function loadBridges(){
   const epoch=workspaceEpoch;
   GV.loading="bridge"; GV.err=""; GV.more=8; vStars();
-  try{ await flushSync(); if(SYNC.dirty || SYNC.conflict) throw new Error("请先完成同步。"); const j=await API.bridges(24); if(epoch!==workspaceEpoch) return; GV.bridges=j.bridges; }
+  try{ await dbWrite(); const j=await API.bridges(24); if(epoch!==workspaceEpoch) return; GV.bridges=j.bridges; }
   catch(e){ GV.err="没算成："+String(e&&e.message||e); GV.bridges=null; }
   GV.loading=""; if(S.v==="stars") vStars();
 }
@@ -208,10 +183,7 @@ async function loadBridges(){
 /* ---------- 串一串 ---------- */
 function gvPath(r){
   r.appendChild(el("p","lede","挑两个看起来完全没关系的，看它们之间有没有一条由共同词条连成的路。"));
-  if(!API.on){
-    r.appendChild(el("p","note2","登录自己的空间后，可以计算私有数据的关系。"));
-    return;
-  }
+
   const all = S.ideas.map(i=>({id:i.id,t:i.title}))
     .concat(S.cold.map(c=>({id:c.id,t:c.title+"（凉了）"})))
     .concat(S.sparks.map(k=>({id:k.id,t:k.text.slice(0,16)+"（念头）"})));
